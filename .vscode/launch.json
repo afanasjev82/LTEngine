@@ -1,0 +1,20 @@
+{
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Launch Rust Program",
+      "program": "${workspaceFolder}/target/debug/ltengine",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "cargo build"
+    }
+  ],
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "executableName",
+      "description": "Enter the name of your Rust executable (e.g., ltengine)"
+    }
+  ]
+}
