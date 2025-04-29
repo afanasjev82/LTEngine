@@ -1226,6 +1226,8 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "clap",
+ "once_cell",
+ "serde",
 ]
 
 [[package]]
