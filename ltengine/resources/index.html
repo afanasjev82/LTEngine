@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	<title>LTEngine - Local AI Machine Translation</title>
+	<meta name="keywords" content="translation,api">
+
+	<link rel="shortcut icon" href="/static/favicon.ico">
+
+	<link rel="preload" href="/static/icon.svg" as="image" />
+	<link rel="preload" href="/static/js/vue%402.js" as="script">
+	<link rel="preload" href="/static/js/materialize.min.js" as="script">
+	<link rel="preload" href="/static/js/prism.min.js" as="script">
+	<link rel="preload" href="/static/app.js" as="script">
+
+	<link rel="preload" href="/static/css/materialize.min.css" as="style"/>
+	<link rel="preload" href="/static/css/material-icons.css" as="style"/>
+	<link rel="preload" href="/static/css/prism.min.css" as="style"/>
+	<link rel="preload" href="/static/css/main.css?v=1.7.1" as="style"/>
+
+	<script src="/static/js/vue%402.js"></script>
+	
+	<!-- Compiled and minified CSS -->
+	<link rel="stylesheet" href="/static/css/materialize.min.css">
+	<link rel="stylesheet" href="/static/css/material-icons.css" />
+	<link rel="stylesheet" href="/static/css/prism.min.css" />
+	<link rel="stylesheet" href="/static/css/main.css?v=1.7.1" />
+
+	<meta name="color-scheme" content="light dark">
+</head>
+
+<body>
+	<header>
+		<nav role="navigation">
+			<div class="nav-wrapper container">
+				<button data-target="nav-mobile" class="sidenav-trigger"><i class="material-icons">menu</i></button>
+				<a id="logo-container" href="/" class="brand-logo noline">
+					<!-- <img src="/static/icon.svg" alt="" class="logo"> -->
+					<span>LTEngine</span> <small style="font-size: 40%;">by LibreTranslate</small>
+				</a>
+				<ul id="nav" class="right hide-on-med-and-down top-nav position-relative">
+					
+					
+					<li><a href="https://github.com/LibreTranslate/LTEngine" rel="noopener noreferrer">GitHub</a></li>
+					
+					<li><a class="noline" href="javascript:setApiKey()" title="Set API Key" aria-label="Set API Key"><i class="material-icons">vpn_key</i></a></li>
+					
+					<li class="change-theme"><a class="noline" href="javascript:toggleColorScheme()" title="Toggle dark/light mode"><i class="material-icons">lightbulb_outline</i></a>
+					</li>
+					
+				</ul>
+				<ul id="nav-mobile" class="sidenav">
+					
+					<li><a href="https://github.com/LibreTranslate/LTEngine" rel="noopener noreferrer">GitHub</a></li>
+					
+					<li><a class="noline" href="javascript:setApiKey()" title="Set API Key" aria-label="Set API Key"><i class="material-icons">vpn_key</i></a></li>
+					
+					<li class="change-theme"><a class="noline" href="javascript:toggleColorScheme()" title="Toggle dark/light mode"><i class="material-icons">lightbulb_outline</i></a>
+					</li>
+					
+				</ul>
+			</div>
+		</nav>
+	</header>
+
+	<main id="app">
+	<div class="section no-pad-bot center" v-if="loading">
+		<div class="container">
+			<div class="row">
+				<div class="preloader-wrapper active">
+				<div class="spinner-layer spinner-blue-only">
+					<div class="circle-clipper left">
+					<div class="circle"></div>
+					</div><div class="gap-patch">
+					<div class="circle"></div>
+					</div><div class="circle-clipper right">
+					<div class="circle"></div>
+					</div>
+				</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div v-else-if="error" class="component">
+		<div class="section no-pad-bot">
+			<div class="container">
+				<div class="row">
+					<div class="col s12 m12">
+						<div class="card horizontal">
+							<div class="card-stacked">
+							<div class="card-content">
+								<i class="material-icons">warning</i><p> [[ error ]]</p>
+							</div>
+							<div class="card-action">
+								<a href="#" @click="dismissError">Dismiss</a>
+							</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div v-else class="component">
+		<div class="section no-pad-bot">
+			<div class="container">
+				<div class="row">
+					
+					<h3 class="header center">Local AI Machine Translation</h3>
+					<div id="translation-type-btns" class="s12 center" v-if="filesTranslation === true">
+						<button type="button" class="btn btn-switch-type" @click="switchType('text')" :class="{'active': translationType === 'text'}" :disabled="disableInput">
+							<i aria-hidden="true" class="material-icons">title</i>
+							<span class="btn-text">Translate Text</span>
+						</button>
+						<button type="button" class="btn btn-switch-type" @click="switchType('files')" :class="{'active': translationType === 'files'}" :disabled="disableInput">
+							<i aria-hidden="true" class="material-icons">description</i>
+							<span class="btn-text">Translate Files</span>
+						</button>
+					</div>
+					<form id="translation-form" class="col s12">
+						<div class="row mb-0">
+							<div class="col s6 language-select">
+								<span id="sourceLangLabel">Translate from</span>
+								<span v-if="detectedLangText !== ''">[[ detectedLangText ]]</span>
+								<select aria-labelledby="sourceLangLabel" class="browser-default" v-model="sourceLang" ref="sourceLangDropdown" @change="handleInput">
+									<template v-for="option in langs">
+										<option :value="option.code">[[ option.name ]]</option>
+									</template>
+								</select>
+							</div>
+
+							<div class="col s6 language-select">
+								<a href="javascript:void(0)" @click="swapLangs" class="btn-switch-language" aria-label="Swap source and target languages">
+									<i class="material-icons">swap_horiz</i>
+								</a>
+								<span id="targetLangLabel">Translate into</span>
+								<select aria-labelledby="targetLangLabel" class="browser-default" v-model="targetLang" ref="targetLangDropdown" @change="handleInput">
+									<template v-for="option in targetLangs">
+										<option v-if="option.code !== 'auto'" :value="option.code">[[ option.name ]]</option>
+									</template>
+								</select>
+							</div>
+						</div>
+
+						<div class="row" v-if="translationType === 'text'">
+							<div class="input-field textarea-container col s12 m6">
+								<label for="textarea1" class="sr-only">
+									Text to translate
+								</label>
+								<textarea id="textarea1" :maxLength="charactersLimit" v-model="inputText" @input="handleInput" ref="inputTextarea" dir="auto" :disabled="disableInput"></textarea>
+								<button class="btn-delete-text" title="Delete text" aria-label="Delete text" @click="deleteText">
+									<i class="material-icons">close</i>
+								</button>
+								<div class="characters-limit-container" v-if="charactersLimit !== -1">
+									<label>[[ inputText.length ]] / [[ charactersLimit ]]</label>
+								</div>
+							</div>
+							<div class="input-field textarea-container col s12 m6">
+								<label for="textarea2" class="sr-only">
+									Translated text
+								</label>
+								<textarea id="textarea2" v-model="translatedText" ref="translatedTextarea" dir="auto" v-bind:readonly="suggestions && !isSuggesting" :disabled="disableInput"></textarea>
+									<div class="actions">
+										<button v-if="suggestions && !loadingTranslation && inputText.length && !isSuggesting" class="btn-action" @click="suggestTranslation" aria-label="Suggest translation">
+											<i class="material-icons">edit</i>
+										</button>
+										<button v-if="suggestions && !loadingTranslation && inputText.length && isSuggesting" class="btn-action btn-blue" @click="closeSuggestTranslation">
+											<span>Cancel</span>
+										</button>
+										<button v-if="suggestions && !loadingTranslation && inputText.length && isSuggesting" :disabled="!canSendSuggestion" class="btn-action btn-blue" @click="sendSuggestion">
+											<span>Send</span>
+										</button>
+										<button v-if="!isSuggesting" class="btn-action btn-copy-translated" @click="copyText">
+											<span>[[ copyTextLabel ]]</span> <i class="material-icons" aria-hidden="true">content_copy</i>
+										</button>
+									</div>
+								<div class="position-relative">
+									<div class="progress translate" v-if="loadingTranslation">
+										<div class="indeterminate"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row" v-if="translationType === 'files'">
+							<div class="file-dropzone">
+								<div v-if="inputFile === false" class="dropzone-content">
+									<span>Supported file formats: [[ supportedFilesFormatFormatted ]]</span>
+									<form action="#">
+										<div class="file-field input-field">
+											<div class="btn">
+												<span id="fileLabel">File</span>
+												<input aria-labelledby="fileLabel" type="file" :accept="supportedFilesFormatFormatted" @change="handleInputFile" ref="fileInputRef">
+											</div>
+											<div class="file-path-wrapper hidden">
+												<input class="file-path validate" type="text">
+											</div>
+										</div>
+									</form>
+								</div>
+								<div v-if="inputFile !== false" class="dropzone-content">
+									<div class="card">
+										<div class="card-content">
+											<div class="row mb-0">
+												<div class="col s12">
+													[[ inputFile.name ]]
+													<button v-if="loadingFileTranslation !== true" @click="removeFile" class="btn-flat" aria-label="Remove file">
+														<i class="material-icons">close</i>
+													</button>
+												</div>
+											</div>
+										</div>
+									</div>
+									<button @click="translateFile" v-if="translatedFileUrl === false && loadingFileTranslation === false" class="btn">Translate</button>
+									<a v-if="translatedFileUrl !== false" :href="translatedFileUrl" class="btn">Download</a>
+									<div class="progress" v-if="loadingFileTranslation">
+										<div class="indeterminate"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<div class="section no-pad-bot" v-if="translationType !== 'files'">
+			<div class="container">
+				<div class="row center">
+					<div class="col s12 m12">
+
+					<div class="row center code-row-wrapper">
+						<div class="col s12 m12 l6 left-align code-box">
+							<p class="mb-0">Request</p>
+							<pre class="code mt-0"><code class="language-javascript" v-html="$options.filters.highlight(requestCode)">
+							</code></pre>
+						</div>
+						<div class="col s12 m12 l6 left-align code-box">
+							<p class="mb-0">Response</p>
+							<pre class="code mt-0"><code class="language-javascript" v-html="$options.filters.highlight(output)">
+							</code></pre>
+						</div>
+					</div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+		
+	</div>
+	</main>
+
+	<footer class="page-footer">
+		<div class="container">
+			<div class="row">
+				<div class="col l12 s12">
+					<h5 class="white-text">LTEngine</h5>
+					<p class="grey-text text-lighten-4">Local AI Machine Translation</p>
+					<p>License: <a class="grey-text text-lighten-4" href="https://www.gnu.org/licenses/agpl-3.0.en.html" rel="noopener noreferrer">AGPLv3</a></p>
+				</div>
+			</div>
+		</div>
+		<div class="footer-copyright center">
+			<p class="white-text">
+				Made with ❤ by <a class="white-text" href="https://github.com/LibreTranslate/LTEngine/graphs/contributors" rel="noopener noreferrer">LibreTranslate Contributors</a>
+			</p>
+		</div>
+	</footer>
+
+	<script src="/static/js/materialize.min.js"></script>
+	<script>
+	// @license magnet:?xt=urn:btih:0b31508aeb0634b347b8270c7bee4d411b5d4109&dn=agpl-3.0.txt AGPL-3.0
+	window.Prism = window.Prism || {};
+	window.Prism.manual = true;
+	// @license-end
+	</script>
+	<script src="/static/js/prism.min.js"></script>
+	<script src="/static/app.js"></script>
+</body>
+</html>
