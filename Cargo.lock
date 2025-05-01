@@ -1268,7 +1268,9 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "actix-web-static-files",
+ "anyhow",
  "clap",
+ "hf-hub",
  "once_cell",
  "serde",
  "serde_json",
