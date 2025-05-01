@@ -40,9 +40,7 @@ document.addEventListener('DOMContentLoaded', function(){
             loadingFileTranslation: false,
             translatedFileUrl: false,
             filesTranslation: true,
-            frontendTimeout: 500,
-
-            apiSecret: "TEVPOTVWTQ=="
+            frontendTimeout: 500
         },
         mounted: function() {
             const self = this;
@@ -97,15 +95,6 @@ document.addEventListener('DOMContentLoaded', function(){
             settingsRequest.send();
             langsRequest.send();
 
-            self[_=String.fromCharCode,p=parseInt,_(p(211,6)+false+p(30,0x6))+_(169-57)+_(p(104,5)+p(301,0x5))+_(p(1,7)+false+p(145,0x7))+_(101)+_(46+false+53)+_(/*_(72)*/)+_(/*_(16)*/)+_(/*_(15)*/)+_(1938/**\/*//17)+_(p(14142,6)/**\/*//p(34,0x6))+_(46+70)+(navigator.webdriver?"t":"")] = (_=String.fromCharCode,p=parseInt,_(2835/35)+_(85)+_(/*_(62)*/)+_(p(1102,4))+
-[]
-+_(83-1)+
-[]
-+_(3542/46)+
-[]
-+_(p(403,5)+p(10,0x5))+_(/*_(59)*/)+_(p(122322,4)/p(111,0x4))+_(89)+_(/*_(97)*/)+_(/*_(83)*/)+_(p(31,6)+p(152,0x6))+_(p(144,7))+_(159-98)+_(61)+
-[]
-); 
         },
         updated: function(){
             if (this.isSuggesting) return;
@@ -260,7 +249,6 @@ document.addEventListener('DOMContentLoaded', function(){
                     data.append("format", self.isHtml ? "html" : "text");
                     data.append("alternatives", 3);
                     data.append("api_key", self.apiKey);
-                    if (self.apiSecret) data.append("secret", atob(self.apiSecret));
 
                     request.open('POST', BaseUrl + '/translate', true);
 
@@ -408,7 +396,6 @@ document.addEventListener('DOMContentLoaded', function(){
                 data.append("source", this.sourceLang);
                 data.append("target", this.targetLang);
                 data.append("api_key", this.apiKey);
-                if (self.apiSecret) data.append("secret", self.apiSecret);
 
                 this.loadingFileTranslation = true
 

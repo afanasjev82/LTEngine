@@ -3,10 +3,10 @@ use actix_web_static_files::ResourceFiles;
 use clap::Parser;
 
 mod languages;
-use languages::LANGUAGES;
-
 mod models;
-use models::MODELS;
+
+use languages::LANGUAGES;
+use models::{MODELS, load_model};
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
@@ -28,13 +28,12 @@ struct Args {
     /// Path to .gguf model file
     #[arg(long, default_value = "")]
     model_file: String,
+
+    /// Set an API key
+    #[arg(long, default_value = "")]
+    api_key: String,  
 }
 
-
-// #[get("/")]
-// async fn index() -> impl Responder {
-//     HttpResponse::Ok().body("LT Engine is running")
-// }
 
 #[get("/languages")]
 async fn get_languages() -> impl Responder {
@@ -68,6 +67,15 @@ async fn get_frontend_settings() -> impl Responder {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let args = Args::parse();
+    let model_path = match load_model(args.model, args.model_file) {
+        Ok(path) => path,
+        Err(err) => {
+            eprintln!("Failed to load model: {}", err);
+            std::process::exit(1);
+        }
+    };
+    
+    println!("Loading model: {}", model_path.display());
 
     HttpServer::new(|| {
         let generated = generate();
