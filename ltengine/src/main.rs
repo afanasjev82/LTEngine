@@ -4,6 +4,7 @@ use clap::Parser;
 
 mod languages;
 mod models;
+mod llm;
 
 use languages::LANGUAGES;
 use models::{MODELS, load_model};
@@ -32,6 +33,10 @@ struct Args {
     /// Set an API key
     #[arg(long, default_value = "")]
     api_key: String,  
+
+    /// Use CPU only
+    #[arg(long)]
+    cpu: bool,
 }
 
 
@@ -76,6 +81,8 @@ async fn main() -> std::io::Result<()> {
     };
     
     println!("Loading model: {}", model_path.display());
+
+    let llm = llm::init_llm(model_path, args.cpu);
 
     HttpServer::new(|| {
         let generated = generate();
