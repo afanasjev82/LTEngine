@@ -2,8 +2,6 @@
 resolver = "2"
 members = [
     "ltengine",
-    "llama-cpp-rs/llama-cpp-sys-2",
-    "llama-cpp-rs/llama-cpp-2",
     "llama-cpp-rs/examples/simple",
 ]
 
