@@ -8,14 +8,11 @@ pub fn init_llm(model_path: PathBuf, cpu: bool) -> Result<LlamaBackend>{
     let backend = LlamaBackend::init()?;
 
     let model_params = {
-        #[cfg(any(feature = "cuda", feature = "vulkan"))]
-        if cpu {
-            LlamaModelParams::default()
-        } else {
+        if !cpu && cfg!(any(feature = "cuda", feature = "vulkan")) {
             LlamaModelParams::default().with_n_gpu_layers(9999)
+        } else {
+            LlamaModelParams::default()
         }
-
-        LlamaModelParams::default()
     };
 
     return Ok(backend);
