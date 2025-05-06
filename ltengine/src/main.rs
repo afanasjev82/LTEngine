@@ -84,13 +84,15 @@ async fn main() -> std::io::Result<()> {
     
     println!("Loading model: {}", model_path.display());
 
-    let llm = match llm::init_llm(model_path, args.cpu) {
-        Ok(model) => model,
+    let llm = match llm::LLM::new(model_path, args.cpu) {
+        Ok(llm) => llm,
         Err(err) => {
             eprintln!("Failed to initialize LLM: {}", err);
             std::process::exit(1);
         }
     };
+
+    let ctx = llm.create_context();
 
     let prompt: String = "my name is".to_string();
 
@@ -108,7 +110,7 @@ async fn main() -> std::io::Result<()> {
     .bind((args.host.clone(), args.port))?
     .run();
 
-    println!("Server listening on: http://{}:{}", args.host, args.port);
+    println!("Running on: http://{}:{}", args.host, args.port);
 
     return server.await;
 }
