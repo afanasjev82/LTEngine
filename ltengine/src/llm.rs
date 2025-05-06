@@ -1,10 +1,11 @@
 use llama_cpp_2::context::params::LlamaContextParams;
 use llama_cpp_2::llama_backend::LlamaBackend;
 use llama_cpp_2::model::params::LlamaModelParams;
+use llama_cpp_2::model::LlamaModel;
 use std::path::PathBuf;
-use anyhow::Result;
+use anyhow::{Result, Context};
 
-pub fn init_llm(model_path: PathBuf, cpu: bool) -> Result<LlamaBackend>{
+pub fn init_llm(model_path: PathBuf, cpu: bool) -> Result<LlamaModel>{
     let backend = LlamaBackend::init()?;
 
     let model_params = {
@@ -15,5 +16,8 @@ pub fn init_llm(model_path: PathBuf, cpu: bool) -> Result<LlamaBackend>{
         }
     };
 
-    return Ok(backend);
+    let model = LlamaModel::load_from_file(&backend, model_path, &model_params)
+        .with_context(|| "Unable to load model")?;
+
+    return Ok(model);
 }

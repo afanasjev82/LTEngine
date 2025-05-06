@@ -5,9 +5,11 @@ use clap::Parser;
 mod languages;
 mod models;
 mod llm;
+mod banner;
 
 use languages::LANGUAGES;
 use models::{MODELS, load_model};
+use banner::print_banner;
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
@@ -82,9 +84,19 @@ async fn main() -> std::io::Result<()> {
     
     println!("Loading model: {}", model_path.display());
 
-    let llm = llm::init_llm(model_path, args.cpu);
+    let llm = match llm::init_llm(model_path, args.cpu) {
+        Ok(model) => model,
+        Err(err) => {
+            eprintln!("Failed to initialize LLM: {}", err);
+            std::process::exit(1);
+        }
+    };
 
-    HttpServer::new(|| {
+    let prompt: String = "my name is".to_string();
+
+    print_banner();
+
+    let server = HttpServer::new(|| {
         let generated = generate();
 
         App::new()
@@ -93,7 +105,10 @@ async fn main() -> std::io::Result<()> {
             .service(get_frontend_settings)
             .service(ResourceFiles::new("/", generated))
     })
-    .bind((args.host, args.port))?
-    .run()
-    .await
+    .bind((args.host.clone(), args.port))?
+    .run();
+
+    println!("Server listening on: http://{}:{}", args.host, args.port);
+
+    return server.await;
 }
