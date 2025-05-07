@@ -30,7 +30,7 @@ struct Args {
     char_limit: u32,
 
     /// Model to use
-    #[arg(long, value_parser = MODELS.keys().collect::<Vec<_>>(), default_value = "gemma3-1b")]
+    #[arg(short='m', long, value_parser = MODELS.keys().collect::<Vec<_>>(), default_value = "gemma3-1b")]
     model: String,
 
     /// Path to .gguf model file
@@ -44,6 +44,10 @@ struct Args {
     /// Use CPU only
     #[arg(long)]
     cpu: bool,
+
+    /// Enable verbose logging
+    #[arg(short = 'v', long)]
+    verbose: bool,
 }
 
 #[get("/test")]
@@ -99,7 +103,7 @@ async fn main() -> std::io::Result<()> {
     
     println!("Loading model: {}", model_path.display());
 
-    let llm = Arc::new(llm::LLM::new(model_path, args.cpu).unwrap_or_else(|err| {
+    let llm = Arc::new(llm::LLM::new(model_path, args.cpu, args.verbose).unwrap_or_else(|err| {
         eprintln!("Failed to initialize LLM: {}", err);
         std::process::exit(1);
     }));

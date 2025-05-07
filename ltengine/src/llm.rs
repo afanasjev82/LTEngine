@@ -7,6 +7,7 @@ use llama_cpp_2::context::LlamaContext;
 use llama_cpp_2::model::{AddBos, Special};
 use llama_cpp_2::llama_batch::LlamaBatch;
 use llama_cpp_2::sampling::LlamaSampler;
+use llama_cpp_2::{send_logs_to_tracing, LogOptions};
 use std::num::NonZeroU32;
 use std::path::PathBuf;
 use anyhow::{Result, Context};
@@ -23,8 +24,13 @@ pub struct LLMContext<'a>{
 }
 
 impl LLM {
-    pub fn new(model_path: PathBuf, cpu: bool) -> Result<Self> {
+    pub fn new(model_path: PathBuf, cpu: bool, verbose: bool) -> Result<Self> {
+        
         let backend = LlamaBackend::init()?;
+
+        if !verbose{
+            send_logs_to_tracing(LogOptions::default().with_logs_enabled(false));
+        }
 
         let model_params = {
             if !cpu && cfg!(any(feature = "cuda", feature = "vulkan")) {
