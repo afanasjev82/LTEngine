@@ -25,12 +25,11 @@ pub struct LLMContext<'a>{
 
 impl LLM {
     pub fn new(model_path: PathBuf, cpu: bool, verbose: bool) -> Result<Self> {
-        
-        let backend = LlamaBackend::init()?;
-
         if !verbose{
             send_logs_to_tracing(LogOptions::default().with_logs_enabled(false));
         }
+        
+        let backend = LlamaBackend::init()?;
 
         let model_params = {
             if !cpu && cfg!(any(feature = "cuda", feature = "vulkan")) {
