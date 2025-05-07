@@ -80,23 +80,21 @@ async fn get_frontend_settings() -> impl Responder {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let args = Args::parse();
-    let model_path = match load_model(args.model, args.model_file) {
-        Ok(path) => path,
-        Err(err) => {
-            eprintln!("Failed to load model: {}", err);
-            std::process::exit(1);
-        }
-    };
+    let model_path = load_model(args.model, args.model_file).unwrap_or_else(|err| {
+        eprintln!("Failed to load model: {}", err);
+        std::process::exit(1);
+    });
     
     println!("Loading model: {}", model_path.display());
 
-    let llm = match llm::LLM::new(model_path, args.cpu) {
-        Ok(llm) => llm,
-        Err(err) => {
-            eprintln!("Failed to initialize LLM: {}", err);
-            std::process::exit(1);
-        }
-    };
+    let llm = llm::LLM::new(model_path, args.cpu).unwrap_or_else(|err| {
+        eprintln!("Failed to initialize LLM: {}", err);
+        std::process::exit(1);
+    });
+    let mut ctx = llm.create_context(2048).unwrap_or_else(|err| {
+        eprintln!("Failed to create context: {}", err);
+        std::process::exit(1);
+    });
 
     print_banner();
 
@@ -115,14 +113,12 @@ async fn main() -> std::io::Result<()> {
     println!("Running on: http://{}:{}", args.host, args.port);
 
     let prompt: String = "Translate this sentence from English to Italian, output just the translation, nothing else: the world is on fire.".to_string();
-    
-    match llm.run_prompt(prompt){
-        Ok(result) => println!("{}", result),
-        Err(err) => {
-            eprintln!("Failed prompt: {}", err);
-            std::process::exit(1);
-        }
-    }
+    let result = ctx.run_prompt(prompt).unwrap_or_else(|err| {
+        eprintln!("Failed prompt: {}", err);
+        std::process::exit(1);
+    });
+
+    println!("{}", result);
 
     return server.await;
 }

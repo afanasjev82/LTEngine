@@ -15,6 +15,11 @@ pub struct LLM {
     model: LlamaModel
 }
 
+pub struct LLMContext<'a>{
+    llm: &'a LLM,
+    ctx: LlamaContext<'a>
+}
+
 impl LLM {
     pub fn new(model_path: PathBuf, cpu: bool) -> Result<Self> {
         let backend = LlamaBackend::init()?;
@@ -33,7 +38,7 @@ impl LLM {
         Ok(LLM { backend, model })
     }
 
-    pub fn create_context(&self, ctx_size: i32) -> Result<LlamaContext<'_>>{
+    pub fn create_context(&self, ctx_size: i32) -> Result<LLMContext>{
         let ctx_params =
             LlamaContextParams::default().with_n_ctx(Some(NonZeroU32::new(ctx_size as u32).unwrap()));
 
@@ -44,16 +49,17 @@ impl LLM {
         let ctx = self.model
             .new_context(&self.backend, ctx_params)
             .with_context(|| "Unable to create the llama context")?;
-        Ok(ctx)
+        Ok(LLMContext{ llm: self, ctx})
     }
+}
 
-    pub fn run_prompt(&self, prompt: String) -> Result<String>{
-        let tokens_list = self.model
+impl LLMContext<'_>{
+    pub fn run_prompt(&mut self, prompt: String) -> Result<String>{
+        let tokens_list = self.llm.model
             .str_to_token(&prompt, AddBos::Always)
             .with_context(|| format!("Failed to tokenize {prompt}"))?;
         
         let ctx_size: i32 = tokens_list.len() as i32 * 3;
-        let mut ctx = self.create_context(ctx_size)?;
 
         // We use this object to submit token data for decoding
         let mut batch = LlamaBatch::new(512, 1);
@@ -65,7 +71,7 @@ impl LLM {
             batch.add(token, i, &[0], is_last)?;
         }
 
-        ctx.decode(&mut batch)
+        self.ctx.decode(&mut batch)
             .with_context(|| "llama_decode() failed")?;
 
         let mut n_cur = batch.n_tokens();
@@ -82,16 +88,16 @@ impl LLM {
         while n_cur <= ctx_size {
             // sample the next token
             {
-                let token = sampler.sample(&ctx, batch.n_tokens() - 1);
+                let token = sampler.sample(&self.ctx, batch.n_tokens() - 1);
 
                 sampler.accept(token);
 
                 // is it an end of stream?
-                if self.model.is_eog_token(token) {
+                if self.llm.model.is_eog_token(token) {
                     break;
                 }
 
-                let output_bytes = self.model.token_to_bytes(token, Special::Tokenize)?;
+                let output_bytes = self.llm.model.token_to_bytes(token, Special::Tokenize)?;
                 // use `Decoder.decode_to_string()` to avoid the intermediate buffer
                 let mut output_string = String::with_capacity(32);
                 let _decode_result = decoder.decode_to_string(&output_bytes, &mut output_string, false);
@@ -103,7 +109,7 @@ impl LLM {
 
             n_cur += 1;
 
-            ctx.decode(&mut batch).with_context(|| "Failed to eval")?;
+            self.ctx.decode(&mut batch).with_context(|| "Failed to eval")?;
         }
 
         Ok(output)
