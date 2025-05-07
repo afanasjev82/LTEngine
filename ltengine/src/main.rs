@@ -1,5 +1,6 @@
 use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 use actix_web_static_files::ResourceFiles;
+use std::sync::Arc;
 use clap::Parser;
 
 mod languages;
@@ -45,6 +46,18 @@ struct Args {
     cpu: bool,
 }
 
+#[get("/test")]
+async fn test_func(data: actix_web::web::Data<Arc<llm::LLM>>) -> impl Responder{
+    let llm = data.get_ref();
+
+    let prompt: String = "Translate this sentence from English to Italian, output just the translation, nothing else: the world is on fire.".to_string();
+    let result = llm.run_prompt(prompt).unwrap_or_else(|err| {
+        eprintln!("Failed prompt: {}", err);
+        std::process::exit(1);
+    });
+
+    HttpResponse::Ok().body(result)
+}
 
 #[get("/languages")]
 async fn get_languages() -> impl Responder {
@@ -76,7 +89,6 @@ async fn get_frontend_settings() -> impl Responder {
     }))
 }
 
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let args = Args::parse();
@@ -87,38 +99,32 @@ async fn main() -> std::io::Result<()> {
     
     println!("Loading model: {}", model_path.display());
 
-    let llm = llm::LLM::new(model_path, args.cpu).unwrap_or_else(|err| {
+    let llm = Arc::new(llm::LLM::new(model_path, args.cpu).unwrap_or_else(|err| {
         eprintln!("Failed to initialize LLM: {}", err);
         std::process::exit(1);
-    });
-    let mut ctx = llm.create_context(2048).unwrap_or_else(|err| {
-        eprintln!("Failed to create context: {}", err);
-        std::process::exit(1);
-    });
+    }));
+    // let mut ctx = llm.create_context(2048).unwrap_or_else(|err| {
+    //     eprintln!("Failed to create context: {}", err);
+    //     std::process::exit(1);
+    // });
 
     print_banner();
 
-    let server = HttpServer::new(|| {
+    let server = HttpServer::new(move || {
         let generated = generate();
 
         App::new()
             // .service(index)
+            .app_data(actix_web::web::Data::new(llm.clone()))
             .service(get_languages)
             .service(get_frontend_settings)
+            .service(test_func)
             .service(ResourceFiles::new("/", generated))
     })
     .bind((args.host.clone(), args.port))?
     .run();
 
     println!("Running on: http://{}:{}", args.host, args.port);
-
-    let prompt: String = "Translate this sentence from English to Italian, output just the translation, nothing else: the world is on fire.".to_string();
-    let result = ctx.run_prompt(prompt).unwrap_or_else(|err| {
-        eprintln!("Failed prompt: {}", err);
-        std::process::exit(1);
-    });
-
-    println!("{}", result);
 
     return server.await;
 }
