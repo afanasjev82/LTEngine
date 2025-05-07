@@ -2,6 +2,7 @@ use llama_cpp_2::context::params::LlamaContextParams;
 use llama_cpp_2::llama_backend::LlamaBackend;
 use llama_cpp_2::model::params::LlamaModelParams;
 use llama_cpp_2::model::LlamaModel;
+use llama_cpp_2::token::LlamaToken;
 use llama_cpp_2::context::LlamaContext;
 use llama_cpp_2::model::{AddBos, Special};
 use llama_cpp_2::llama_batch::LlamaBatch;
@@ -17,7 +18,8 @@ pub struct LLM {
 
 pub struct LLMContext<'a>{
     llm: &'a LLM,
-    ctx: LlamaContext<'a>
+    ctx: LlamaContext<'a>,
+    ctx_size: i32
 }
 
 impl LLM {
@@ -49,18 +51,24 @@ impl LLM {
         let ctx = self.model
             .new_context(&self.backend, ctx_params)
             .with_context(|| "Unable to create the llama context")?;
-        Ok(LLMContext{ llm: self, ctx})
+        Ok(LLMContext{ llm: self, ctx, ctx_size })
     }
-}
 
-impl LLMContext<'_>{
-    pub fn run_prompt(&mut self, prompt: String) -> Result<String>{
-        let tokens_list = self.llm.model
+    pub fn run_prompt(&self, prompt: String) -> Result<String>{
+        let tokens_list = self.model
             .str_to_token(&prompt, AddBos::Always)
             .with_context(|| format!("Failed to tokenize {prompt}"))?;
         
         let ctx_size: i32 = tokens_list.len() as i32 * 3;
+        let mut ctx = self.create_context(ctx_size)?;
+        ctx.process(tokens_list)
+    }
+}
 
+impl LLMContext<'_>{
+    pub fn process(&mut self, tokens_list: Vec<LlamaToken>) -> Result<String>{
+        // let ctx_size: i32 = tokens_list.len() as i32 * 3;
+        
         // We use this object to submit token data for decoding
         let mut batch = LlamaBatch::new(512, 1);
 
@@ -85,7 +93,7 @@ impl LLMContext<'_>{
 
         let mut output = String::new();
 
-        while n_cur <= ctx_size {
+        while n_cur <= self.ctx_size {
             // sample the next token
             {
                 let token = sampler.sample(&self.ctx, batch.n_tokens() - 1);
