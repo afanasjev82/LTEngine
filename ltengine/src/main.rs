@@ -24,6 +24,10 @@ struct Args {
     #[arg(short, long, default_value_t = 5000)]
     port: u16,
 
+    /// Character limit for translation requests
+    #[arg(long, default_value_t = 5000)]
+    char_limit: u32,
+
     /// Model to use
     #[arg(long, value_parser = MODELS.keys().collect::<Vec<_>>(), default_value = "gemma3-1b")]
     model: String,
@@ -49,9 +53,11 @@ async fn get_languages() -> impl Responder {
 
 #[get("/frontend/settings")]
 async fn get_frontend_settings() -> impl Responder {
+    let args = Args::parse();
+
     HttpResponse::Ok().json(serde_json::json!({
         "apiKeys": false,
-        "charLimit": 5000,
+        "charLimit": args.char_limit,
         "filesTranslation": false,
         "frontendTimeout": 1000,
         "keyRequired": false,
@@ -92,10 +98,6 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
-    let ctx = llm.create_context();
-
-    let prompt: String = "my name is".to_string();
-
     print_banner();
 
     let server = HttpServer::new(|| {
@@ -111,6 +113,16 @@ async fn main() -> std::io::Result<()> {
     .run();
 
     println!("Running on: http://{}:{}", args.host, args.port);
+
+    let prompt: String = "Translate this sentence from English to Italian, output just the translation, nothing else: the world is on fire.".to_string();
+    
+    match llm.run_prompt(prompt){
+        Ok(result) => println!("{}", result),
+        Err(err) => {
+            eprintln!("Failed prompt: {}", err);
+            std::process::exit(1);
+        }
+    }
 
     return server.await;
 }

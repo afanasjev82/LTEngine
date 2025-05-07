@@ -1270,6 +1270,7 @@ dependencies = [
  "actix-web-static-files",
  "anyhow",
  "clap",
+ "encoding_rs",
  "hf-hub",
  "llama-cpp-2",
  "once_cell",
