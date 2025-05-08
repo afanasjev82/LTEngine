@@ -119,7 +119,7 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
     if !args.api_key.is_empty() && body.api_key.is_none_or(|key| key != args.api_key){
         return Err(ErrorResponse{
             error: format!("Invalid API key"),
-            status: 400
+            status: 403
         });
     }
 
@@ -129,8 +129,7 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
         ("source", &body.source),
         ("target", &body.target),
     ] {
-        // null or empty?
-        if value.as_ref().map_or(true, |v| v.trim().is_empty()) {
+        if value.as_ref().is_none_or(|v| v.trim().is_empty()) {
             return Err(ErrorResponse {
                 error: format!("Invalid request: missing {} parameter", key),
                 status: 400,
