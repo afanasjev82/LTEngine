@@ -67,13 +67,14 @@ impl LLM {
             .with_context(|| format!("Failed to tokenize {prompt}"))?;
         
         let ctx_size: i32 = tokens_list.len() as i32 * 3;
+        let mut ctx = self.create_context(ctx_size)?;
         {
-            // TODO: The llama bindings do not appear to be totally thread-safe
+            // TODO: The llama bindings (or llama itself?) do not appear to be totally thread-safe
             // as garbage starts to come out when we run inference in parallel
             // this might need to be investigated and fixed. For now we lock and process requests
             // one at a time.
+            // TODO: consider locking with a timeout: https://docs.rs/parking_lot/latest/parking_lot/type.Mutex.html#method.try_lock_for
             let _lock = self.prompt_lock.lock();
-            let mut ctx = self.create_context(ctx_size)?;
             ctx.process(tokens_list)
         }
     }
@@ -118,7 +119,7 @@ impl LLMContext<'_>{
                 if self.llm.model.is_eog_token(token) {
                     break;
                 }
-
+                    
                 let output_bytes = self.llm.model.token_to_bytes(token, Special::Tokenize)?;
                 // use `Decoder.decode_to_string()` to avoid the intermediate buffer
                 let mut output_string = String::with_capacity(32);
