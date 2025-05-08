@@ -1,7 +1,7 @@
 use llama_cpp_2::context::params::LlamaContextParams;
 use llama_cpp_2::llama_backend::LlamaBackend;
 use llama_cpp_2::model::params::LlamaModelParams;
-use llama_cpp_2::model::LlamaModel;
+use llama_cpp_2::model::{LlamaModel, LlamaChatMessage};
 use llama_cpp_2::token::LlamaToken;
 use llama_cpp_2::context::LlamaContext;
 use llama_cpp_2::model::{AddBos, Special};
@@ -61,10 +61,17 @@ impl LLM {
         Ok(LLMContext{ llm: self, ctx, ctx_size })
     }
 
-    pub fn run_prompt(&self, prompt: String) -> Result<String>{
+    pub fn run_prompt(&self, system: String, user: String) -> Result<String>{
+        let tmpl = self.model.chat_template(None)?;
+        let llm_input = self.model.apply_chat_template(&tmpl, &[
+            LlamaChatMessage::new("system".to_string(), system)?,
+            LlamaChatMessage::new("user".to_string(), user)?
+        ], true)?;
+
         let tokens_list = self.model
-            .str_to_token(&prompt, AddBos::Always)
-            .with_context(|| format!("Failed to tokenize {prompt}"))?;
+            .str_to_token(&llm_input
+            , AddBos::Always)
+            .with_context(|| format!("Failed to tokenize {llm_input}"))?;
         // for token in &tokens_list {
         //     eprint!("{} {} | ", self.model.token_to_str(*token, Special::Tokenize)?, token);
         // }
@@ -112,7 +119,7 @@ impl LLMContext<'_>{
             LlamaSampler::top_p(0.95, 0),
             LlamaSampler::min_p(0.05, 0),
             LlamaSampler::xtc(0.0, 0.1, 0, 42),
-            LlamaSampler::temp_ext(0.8, 0.0, 1.0),
+            LlamaSampler::temp_ext(0.0, 0.0, 1.0),
             LlamaSampler::dist(42)
         ]);
 

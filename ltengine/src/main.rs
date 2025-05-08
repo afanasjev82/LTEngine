@@ -61,17 +61,10 @@ struct Args {
 async fn test_func(data: actix_web::web::Data<Arc<llm::LLM>>) -> impl Responder{
     let llm = data.get_ref();
 
-    let prompt: String = "You are an expert linguist, specializing in translation. Translate one and only one text from English to Italian, capturing the nuances of the sentence, paying attention to masculine/feminine/plural and proper use of articles and grammar. Output the translation text only and nothing else.\n\nEnglish: Ovechkin’s first assist of the night was on the game-winning goal by rookie Nicklas Backstrom;\n\nItalian:".to_string();
-/*
-    let prompt: String = r#"You are an expert linguist, specializing in translation. Translate the following text from English to Italian. Output the translation text only and nothing else.
+    let system = "You are an expert linguist, specializing in translation. You are able to capture the nuances of the languages you translate. You pay attention to masculine/feminine/plural and proper use of articles and grammar. You always provide natural sounding translations that fully preserve the meaning of the original text. You never provide explanations for your work. You always answer with the translated text and nothing else.".to_string();
+    let user: String = "Translate the text below from English to Italian.\n\nEnglish: Ovechkin’s first assist of the night was on the game-winning goal by rookie Nicklas Backstrom;\n\nItalian:\n".to_string();
 
-English: The cat (Felis catus), also referred to as the domestic cat or house cat, is a small domesticated carnivorous mammal. It is the only domesticated species of the family Felidae. Advances in archaeology and genetics have shown that the domestication of the cat occurred in the Near East around 7500 BC. It is commonly kept as a pet and working cat, but also ranges freely as a feral cat avoiding human contact. It is valued by humans for companionship and its ability to kill vermin. Its retractable claws are adapted to killing small prey species such as mice and rats. It has a strong, flexible body, quick reflexes, and sharp teeth, and its night vision and sense of smell are well developed. It is a social species, but a solitary hunter and a crepuscular predator.
-
-Cat intelligence is evident in their ability to adapt, learn through observation, solve problems and research has shown they possess strong memories, exhibit neuroplasticity, and display cognitive skills comparable to a young child. Cat communication includes meowing, purring, trilling, hissing, growling, grunting, and body language. It can hear sounds too faint or too high in frequency for human ears, such as those made by small mammals. It secretes and perceives pheromones.
-
-Italian:"#.to_string();
-    */
-    let result = llm.run_prompt(prompt).unwrap_or_else(|err| {
+    let result = llm.run_prompt(system, user).unwrap_or_else(|err| {
         eprintln!("Failed prompt: {}", err);
         std::process::exit(1);
     });
@@ -109,7 +102,7 @@ impl MPTranslateRequest {
 }
 
 #[post("/translate")]
-async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<Args>>) -> Result<HttpResponse, ErrorResponse> {
+async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<Args>>, llm: actix_web::web::Data<Arc<llm::LLM>>) -> Result<HttpResponse, ErrorResponse> {
     let content_type = req.headers().get(header::CONTENT_TYPE).map(|h| h.to_str().unwrap_or("")).unwrap_or("");
 
     let body: TranslateRequest;
@@ -161,7 +154,19 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
         });
     }
 
-    Ok(HttpResponse::Ok().json(serde_json::json!({"translatedText": "OK", "alternatives": body.alternatives})))
+    let llm = llm.get_ref();
+    let system = "You are an expert linguist, specializing in translation. You are able to capture the nuances of the languages you translate. You pay attention to masculine/feminine/plural and proper use of articles and grammar. You always provide natural sounding translations that fully preserve the meaning of the original text. You never provide explanations for your work. You always answer with the translated text and nothing else.".to_string();
+    let user: String = format!("Translate the text below from English to Italian.\n\nEnglish: {}\n\nItalian:\n", q).to_string();
+
+    let translated_text = llm.run_prompt(system, user).unwrap_or(q);
+    let mut response = serde_json::json!({"translatedText": translated_text});
+
+    // TODO: we just add this for compatibility for now
+    // we should allow multiple alternatives to be generated
+    if body.alternatives.is_some_and(|v| v > 0) {
+        response["alternatives"] = serde_json::json!([]);
+    }
+    Ok(HttpResponse::Ok().json(response))
 }
 
 #[get("/languages")]
