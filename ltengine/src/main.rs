@@ -1,16 +1,21 @@
-use actix_web::{get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder, Error, FromRequest, error};
+use actix_web::{
+    get, post, web, App, HttpRequest, HttpResponse, 
+    HttpServer, Responder, http::header, FromRequest
+};
 use actix_multipart::form::{MultipartForm, text::Text as MPText};
 use actix_web_static_files::ResourceFiles;
 use std::sync::Arc;
 use clap::Parser;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
+mod error_response;
 mod languages;
 mod models;
 mod llm;
 mod banner;
 
 use languages::LANGUAGES;
+use error_response::ErrorResponse;
 use models::{MODELS, load_model};
 use banner::print_banner;
 
@@ -65,59 +70,80 @@ async fn test_func(data: actix_web::web::Data<Arc<llm::LLM>>) -> impl Responder{
     HttpResponse::Ok().body(result)
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct TranslateRequest {
-    q: String,
-    source: String,
-    target: String,
-    api_key: Option<String>,
+    q: Option<String>,
+    source: Option<String>,
+    target: Option<String>,
+    api_key: Option<String>
 }
 
 #[derive(MultipartForm)]
 struct MPTranslateRequest {
-    q: MPText<String>,
-    source: MPText<String>,
-    target: MPText<String>,
-    api_key: Option<MPText<String>>,
+    q: Option<MPText<String>>,
+    source: Option<MPText<String>>,
+    target: Option<MPText<String>>,
+    api_key: Option<MPText<String>>
 }
 impl MPTranslateRequest {
     fn into_translate_request(self) -> TranslateRequest {
         TranslateRequest {
-            q: self.q.into_inner(),
-            source: self.source.into_inner(),
-            target: self.target.into_inner(),
-            api_key: self.api_key.map(|key| key.into_inner()),
+            q: self.q.map(|v| v.into_inner()),
+            source: self.source.map(|v| v.into_inner()),
+            target: self.target.map(|v| v.into_inner()),
+            api_key: self.api_key.map(|v| v.into_inner()),
         }
     }
 }
 
 #[post("/translate")]
-async fn translate(req: HttpRequest, mut payload: web::Payload) -> Result<HttpResponse, Error> {
-    let content_type = req.headers().get("content-type").map(|h| h.to_str().unwrap_or("")).unwrap_or("");
+async fn translate(req: HttpRequest, payload: web::Payload) -> Result<HttpResponse, ErrorResponse> {
+    let content_type = req.headers().get(header::CONTENT_TYPE).map(|h| h.to_str().unwrap_or("")).unwrap_or("");
+
+    let body: TranslateRequest;
 
     if content_type.starts_with("application/json") {
         let json = actix_web::web::Json::<TranslateRequest>::from_request(&req, &mut payload.into_inner()).await?;
-        println!("JSON: {:?}", json);
+        body = json.into_inner()
     } else if content_type.starts_with("application/x-www-form-urlencoded") {
         let form = actix_web::web::Form::<TranslateRequest>::from_request(&req, &mut payload.into_inner()).await?;
-        println!("Form: {:?}", form);
+        body = form.into_inner()
     } else if content_type.starts_with("multipart/form-data") {
-        // let multipart = Multipart::from_request
+        let form = MultipartForm::<MPTranslateRequest>::from_request(&req, &mut payload.into_inner()).await?;
+        body = form.into_inner().into_translate_request();
     } else {
-        return Ok(HttpResponse::BadRequest().body("Unsupported content-type"));
+        return Err(ErrorResponse{ error: "Unsupported content-type".to_string(), status: 400 });
     }
 
+    // Validate required params
+    for (key, value) in [
+        ("q", &body.q),
+        ("source", &body.source),
+        ("target", &body.target),
+    ] {
+        // null or empty?
+        if value.as_ref().map_or(true, |v| v.trim().is_empty()) {
+            return Err(ErrorResponse {
+                error: format!("Invalid request: missing {} parameter", key),
+                status: 400,
+            });
+        }
+    }
+
+    // Check limits
     let args = Args::parse();
+    let q = body.q.unwrap();
+    let source = body.source.unwrap();
+    let target = body.target.unwrap();
 
-    // println!("{}", req.q);
+    if q.len() > args.char_limit {
+        return Err(ErrorResponse{
+            error: format!("Invalid request: request ({}) exceeds text limit ({})", q.len(), args.char_limit),
+            status: 400
+        });
+    }
 
-    // if req.q.len() > args.char_limit {
-    //     return HttpResponse::BadRequest().json(serde_json::json!({
-    //         "error": format!("Invalid request: request ({}) exceeds text limit ({})", req.q.len(), args.char_limit)
-    //     }));
-    // }
-
-    Ok(HttpResponse::Ok().json(serde_json::json!({})))
+    Ok(HttpResponse::Ok().json(serde_json::json!({"translatedText": "OK"})))
 }
 
 #[get("/languages")]
@@ -170,29 +196,9 @@ async fn main() -> std::io::Result<()> {
     let server = HttpServer::new(move || {
         let generated = generate();
 
-        let form_error = |err: error::UrlencodedError, _req: &HttpRequest| {
-            let msg = err.to_string();
-            error::InternalError::from_response(
-                err,
-                HttpResponse::BadRequest().json(serde_json::json!({"error": msg})),
-            )
-            .into()
-        };
-        let json_error = |err: error::JsonPayloadError, _req: &HttpRequest| {
-            let msg = err.to_string();
-            error::InternalError::from_response(
-                err,
-                HttpResponse::BadRequest().json(serde_json::json!({"error": msg})),
-            )
-            .into()
-        };
-
         App::new()
             // .service(index)
             .app_data(web::Data::new(llm.clone()))
-            .app_data(web::FormConfig::default().error_handler(form_error))
-            .app_data(web::JsonConfig::default().error_handler(json_error))
-            
             .service(get_languages)
             .service(get_frontend_settings)
             .service(test_func)
