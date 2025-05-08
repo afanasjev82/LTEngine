@@ -61,7 +61,7 @@ struct Args {
 async fn test_func(data: actix_web::web::Data<Arc<llm::LLM>>) -> impl Responder{
     let llm = data.get_ref();
 
-    let prompt: String = "You are an expert linguist, specializing in translation. Translate the following text from English to Italian. Output the translation text only and nothing else.\n\nText: The world is on fire.\n And we are doomed!\n\nTranslation:".to_string();
+    let prompt: String = "You are an expert linguist, specializing in translation. Translate the following text from English to Italian. Output the translation text only and nothing else.\n\nText: The world is on fire.\nAnd we are doomed!\n\nTranslation:".to_string();
     let result = llm.run_prompt(prompt).unwrap_or_else(|err| {
         eprintln!("Failed prompt: {}", err);
         std::process::exit(1);
