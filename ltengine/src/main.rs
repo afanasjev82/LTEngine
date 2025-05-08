@@ -75,7 +75,8 @@ struct TranslateRequest {
     q: Option<String>,
     source: Option<String>,
     target: Option<String>,
-    api_key: Option<String>
+    api_key: Option<String>,
+    alternatives: Option<u32>
 }
 
 #[derive(MultipartForm)]
@@ -83,7 +84,8 @@ struct MPTranslateRequest {
     q: Option<MPText<String>>,
     source: Option<MPText<String>>,
     target: Option<MPText<String>>,
-    api_key: Option<MPText<String>>
+    api_key: Option<MPText<String>>,
+    alternatives: Option<MPText<u32>>
 }
 impl MPTranslateRequest {
     fn into_translate_request(self) -> TranslateRequest {
@@ -92,6 +94,7 @@ impl MPTranslateRequest {
             source: self.source.map(|v| v.into_inner()),
             target: self.target.map(|v| v.into_inner()),
             api_key: self.api_key.map(|v| v.into_inner()),
+            alternatives: self.alternatives.map(|v| v.into_inner()),
         }
     }
 }
@@ -149,7 +152,7 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
         });
     }
 
-    Ok(HttpResponse::Ok().json(serde_json::json!({"translatedText": "OK"})))
+    Ok(HttpResponse::Ok().json(serde_json::json!({"translatedText": "OK", "alternatives": body.alternatives})))
 }
 
 #[get("/languages")]
