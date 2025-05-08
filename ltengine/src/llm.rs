@@ -65,7 +65,9 @@ impl LLM {
         let tokens_list = self.model
             .str_to_token(&prompt, AddBos::Always)
             .with_context(|| format!("Failed to tokenize {prompt}"))?;
-        
+        // for token in &tokens_list {
+        //     eprint!("{} {} | ", self.model.token_to_str(*token, Special::Tokenize)?, token);
+        // }
         let ctx_size: i32 = tokens_list.len() as i32 * 3;
         let mut ctx = self.create_context(ctx_size)?;
         {
@@ -102,8 +104,10 @@ impl LLMContext<'_>{
         let mut decoder = encoding_rs::UTF_8.new_decoder();
 
         let mut sampler = LlamaSampler::chain_simple([
+            LlamaSampler::top_k(40),
+            LlamaSampler::top_p(0.95, 0),
+            LlamaSampler::temp(0.8),
             LlamaSampler::dist(42),
-            LlamaSampler::greedy(),
         ]);
 
         let mut output = String::new();
