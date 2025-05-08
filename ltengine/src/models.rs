@@ -48,7 +48,7 @@ impl Model {
     }
 }
 
-pub fn load_model(model_id: String, model_file: String) -> Result<PathBuf> {
+pub fn load_model(model_id: &String, model_file: &String) -> Result<PathBuf> {
     let model = if !model_file.is_empty() {
         Model::Local {
             path: PathBuf::from(model_file),
