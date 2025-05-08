@@ -21,7 +21,7 @@ use banner::print_banner;
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(version, about, long_about = None)]
 struct Args {
     /// Hostname to bind to
@@ -97,7 +97,7 @@ impl MPTranslateRequest {
 }
 
 #[post("/translate")]
-async fn translate(req: HttpRequest, payload: web::Payload) -> Result<HttpResponse, ErrorResponse> {
+async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<Args>>) -> Result<HttpResponse, ErrorResponse> {
     let content_type = req.headers().get(header::CONTENT_TYPE).map(|h| h.to_str().unwrap_or("")).unwrap_or("");
 
     let body: TranslateRequest;
@@ -131,7 +131,6 @@ async fn translate(req: HttpRequest, payload: web::Payload) -> Result<HttpRespon
     }
 
     // Check limits
-    let args = Args::parse();
     let q = body.q.unwrap();
     let source = body.source.unwrap();
     let target = body.target.unwrap();
@@ -152,9 +151,7 @@ async fn get_languages() -> impl Responder {
 }
 
 #[get("/frontend/settings")]
-async fn get_frontend_settings() -> impl Responder {
-    let args = Args::parse();
-
+async fn get_frontend_settings(args: web::Data<Arc<Args>>) -> impl Responder {
     HttpResponse::Ok().json(serde_json::json!({
         "apiKeys": false,
         "charLimit": args.char_limit,
@@ -178,8 +175,12 @@ async fn get_frontend_settings() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let args = Args::parse();
-    let model_path = load_model(args.model, args.model_file).unwrap_or_else(|err| {
+    let args = Arc::new(Args::parse());
+
+    let host = args.host.clone();
+    let port = args.port;
+
+    let model_path = load_model(&args.model, &args.model_file).unwrap_or_else(|err| {
         eprintln!("Failed to load model: {}", err);
         std::process::exit(1);
     });
@@ -199,16 +200,17 @@ async fn main() -> std::io::Result<()> {
         App::new()
             // .service(index)
             .app_data(web::Data::new(llm.clone()))
+            .app_data(web::Data::new(args.clone()))
             .service(get_languages)
             .service(get_frontend_settings)
             .service(test_func)
             .service(translate)
             .service(ResourceFiles::new("/", generated))
     })
-    .bind((args.host.clone(), args.port))?
+    .bind((host.clone(), port))?
     .run();
 
-    println!("Running on: http://{}:{}", args.host, args.port);
+    println!("Running on: http://{}:{}", host, port);
 
     return server.await;
 }
