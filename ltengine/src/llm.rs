@@ -87,7 +87,7 @@ impl LLMContext<'_>{
         // let ctx_size: i32 = tokens_list.len() as i32 * 3;
         
         // We use this object to submit token data for decoding
-        let mut batch = LlamaBatch::new(512, 1);
+        let mut batch = LlamaBatch::new(self.ctx_size.try_into()?, 1);
 
         let last_index: i32 = (tokens_list.len() - 1) as i32;
         for (i, token) in (0_i32..).zip(tokens_list.into_iter()) {
@@ -112,13 +112,14 @@ impl LLMContext<'_>{
             LlamaSampler::top_p(0.95, 0),
             LlamaSampler::min_p(0.05, 0),
             LlamaSampler::xtc(0.0, 0.1, 0, 42),
-            LlamaSampler::temp(0.8),
+            LlamaSampler::temp_ext(0.8, 0.0, 1.0),
             LlamaSampler::dist(42)
         ]);
 
         let mut output = String::new();
 
         while n_cur <= self.ctx_size {
+
             // sample the next token
             {
                 let token = sampler.sample(&self.ctx, batch.n_tokens() - 1);
