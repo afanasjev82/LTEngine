@@ -10,11 +10,13 @@ use llama_cpp_2::sampling::LlamaSampler;
 use llama_cpp_2::{send_logs_to_tracing, LogOptions};
 use std::num::NonZeroU32;
 use std::path::PathBuf;
+use std::sync::Mutex;
 use anyhow::{Result, Context};
 
 pub struct LLM {
     backend: LlamaBackend,
-    model: LlamaModel
+    model: LlamaModel,
+    prompt_lock: Mutex<bool>
 }
 
 pub struct LLMContext<'a>{
@@ -42,7 +44,7 @@ impl LLM {
         let model = LlamaModel::load_from_file(&backend, model_path, &model_params)
             .with_context(|| "Unable to load model")?;
         
-        Ok(LLM { backend, model })
+        Ok(LLM { backend, model, prompt_lock: Mutex::new(true) })
     }
 
     pub fn create_context(&self, ctx_size: i32) -> Result<LLMContext>{
@@ -65,8 +67,15 @@ impl LLM {
             .with_context(|| format!("Failed to tokenize {prompt}"))?;
         
         let ctx_size: i32 = tokens_list.len() as i32 * 3;
-        let mut ctx = self.create_context(ctx_size)?;
-        ctx.process(tokens_list)
+        {
+            // TODO: The llama bindings do not appear to be totally thread-safe
+            // as garbage starts to come out when we run inference in parallel
+            // this might need to be investigated and fixed. For now we lock and process requests
+            // one at a time.
+            let _lock = self.prompt_lock.lock();
+            let mut ctx = self.create_context(ctx_size)?;
+            ctx.process(tokens_list)
+        }
     }
 }
 
