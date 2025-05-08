@@ -115,6 +115,14 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
         return Err(ErrorResponse{ error: "Unsupported content-type".to_string(), status: 400 });
     }
 
+    // Check key
+    if !args.api_key.is_empty() && body.api_key.is_none_or(|key| key != args.api_key){
+        return Err(ErrorResponse{
+            error: format!("Invalid API key"),
+            status: 400
+        });
+    }
+
     // Validate required params
     for (key, value) in [
         ("q", &body.q),
