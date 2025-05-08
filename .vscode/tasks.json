@@ -6,7 +6,9 @@
       "label": "cargo build",
       "command": "cargo",
       "args": [
-        "build"
+        "build",
+        "--bin",
+        "ltengine"
       ],
       "group": {
         "kind": "build",
