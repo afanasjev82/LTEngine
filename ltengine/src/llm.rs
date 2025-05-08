@@ -102,12 +102,18 @@ impl LLMContext<'_>{
         let mut n_cur = batch.n_tokens();
 
         let mut decoder = encoding_rs::UTF_8.new_decoder();
+        let seq_breakers = vec![b"\n", b":", b"\"", b"*"];
 
         let mut sampler = LlamaSampler::chain_simple([
+            LlamaSampler::penalties(64, 1.0, 0.0, 0.0),
+            LlamaSampler::dry(&self.llm.model, 0.0, 1.75, 2, -1, seq_breakers),
             LlamaSampler::top_k(40),
+            LlamaSampler::typical(1.0, 0),
             LlamaSampler::top_p(0.95, 0),
+            LlamaSampler::min_p(0.05, 0),
+            LlamaSampler::xtc(0.0, 0.1, 0, 42),
             LlamaSampler::temp(0.8),
-            LlamaSampler::dist(42),
+            LlamaSampler::dist(42)
         ]);
 
         let mut output = String::new();
