@@ -37,7 +37,7 @@ struct Args {
     char_limit: usize,
 
     /// Model to use
-    #[arg(short='m', long, value_parser = MODELS.keys().collect::<Vec<_>>(), default_value = "gemma3-1b")]
+    #[arg(short='m', long, value_parser = MODELS.keys().collect::<Vec<_>>(), default_value = "gemma3-4b")]
     model: String,
 
     /// Path to .gguf model file
