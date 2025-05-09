@@ -4,7 +4,7 @@ use actix_web::{
 };
 use actix_multipart::form::{MultipartForm, text::Text as MPText};
 use actix_web_static_files::ResourceFiles;
-use std::sync::Arc;
+use std::{net::ToSocketAddrs, sync::Arc};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 
@@ -55,21 +55,6 @@ struct Args {
     /// Enable verbose logging
     #[arg(short = 'v', long)]
     verbose: bool,
-}
-
-#[get("/test")]
-async fn test_func(data: actix_web::web::Data<Arc<llm::LLM>>) -> impl Responder{
-    let llm = data.get_ref();
-
-    let system = "You are an expert linguist, specializing in translation. You are able to capture the nuances of the languages you translate. You pay attention to masculine/feminine/plural and proper use of articles and grammar. You always provide natural sounding translations that fully preserve the meaning of the original text. You never provide explanations for your work. You always answer with the translated text and nothing else.".to_string();
-    let user: String = "Translate the text below from English to Italian.\n\nEnglish: Ovechkin’s first assist of the night was on the game-winning goal by rookie Nicklas Backstrom;\n\nItalian:\n".to_string();
-
-    let result = llm.run_prompt(system, user).unwrap_or_else(|err| {
-        eprintln!("Failed prompt: {}", err);
-        std::process::exit(1);
-    });
-
-    HttpResponse::Ok().body(result)
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -169,6 +154,22 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
     Ok(HttpResponse::Ok().json(response))
 }
 
+#[post("/translate_file")]
+async fn translate_file() -> Result<HttpResponse, ErrorResponse> {
+    Err(ErrorResponse{
+        error: "Not implemented".to_string(),
+        status: 501
+    })
+}
+
+#[post("/suggest")]
+async fn suggest() -> Result<HttpResponse, ErrorResponse> {
+    Err(ErrorResponse{
+        error: "Not implemented".to_string(),
+        status: 501
+    })
+}
+
 #[get("/languages")]
 async fn get_languages() -> impl Responder {
     HttpResponse::Ok().json(&*LANGUAGES)
@@ -227,8 +228,9 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(args.clone()))
             .service(get_languages)
             .service(get_frontend_settings)
-            .service(test_func)
             .service(translate)
+            .service(translate_file)
+            .service(suggest)
             .service(ResourceFiles::new("/", generated))
     })
     .bind((host.clone(), port))?
