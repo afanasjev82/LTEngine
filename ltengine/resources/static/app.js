@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     '		source: ' + this.$options.filters.escape(this.sourceLang) + ',',
                     '		target: ' + this.$options.filters.escape(this.targetLang) + ',',
                     '		format: "' + (this.isHtml ? "html" : "text") + '",',
-                    '		alternatives: 3,',
+                    //'		alternatives: 3,',
                     '		api_key: "' + this.apiKey + '"',
                     '	}),',
                     '	headers: { "Content-Type": "application/json" }',
@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     data.append("source", self.sourceLang);
                     data.append("target", self.targetLang);
                     data.append("format", self.isHtml ? "html" : "text");
-                    data.append("alternatives", 3);
+                    //data.append("alternatives", 3);
                     data.append("api_key", self.apiKey);
 
                     request.open('POST', BaseUrl + '/translate', true);
