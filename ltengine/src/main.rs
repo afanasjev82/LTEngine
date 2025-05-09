@@ -159,7 +159,7 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
     let user: String = format!("Translate the text below from English to Italian.\n\nEnglish: {}\n\nItalian:\n", q).to_string();
 
     let translated_text = llm.run_prompt(system, user).unwrap_or(q);
-    let mut response = serde_json::json!({"translatedText": translated_text});
+    let mut response = serde_json::json!({"translatedText": translated_text.trim()});
 
     // TODO: we just add this for compatibility for now
     // we should allow multiple alternatives to be generated
