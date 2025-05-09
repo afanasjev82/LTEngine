@@ -1,5 +1,7 @@
 use serde::Serialize;
 use once_cell::sync::Lazy;
+use whatlang::{Lang, Detector};
+use std::collections::HashMap;
 
 const LANGS: &[(&str, &str, &str)] = &[
     ("en", "", "English"),
@@ -58,10 +60,28 @@ pub struct Language {
     pub code: &'static str,
     pub name: &'static str,
     pub targets: &'static [&'static str],
+
+    #[serde(skip)]
+    pub lang_detect: Option<&'static Lang>,
+
+    #[serde(skip)]
+    pub internal_code: &'static str
 }
 
 
 pub static LANGUAGES: Lazy<Vec<Language>> = Lazy::new(|| {
+    
+    // From whatlang names to our names
+    let eng_name_map: HashMap<&'static str, &'static str> = [
+        ("Mandarin", "Chinese")
+        ].iter().cloned().collect();
+        
+    let mut lang_detect_map: HashMap<&'static str, &'static Lang> = HashMap::new();
+    for lang in Lang::all() {
+        let eng_name = lang.eng_name();
+        lang_detect_map.insert(eng_name_map.get(eng_name).unwrap_or(&eng_name), lang);
+    }
+
     LANGS.iter()
         .map(|&(code, alias, name)| {
             let targets: Vec<&str> = LANGS
@@ -73,7 +93,54 @@ pub static LANGUAGES: Lazy<Vec<Language>> = Lazy::new(|| {
                 code: if alias != "" { alias } else { code },
                 name,
                 targets: Box::leak(targets.into_boxed_slice()),
+                lang_detect: lang_detect_map.get(name).map(|v| &**v),
+                internal_code: code
             }
         })
         .collect()
 });
+
+static LANGUAGES_MAP: Lazy<HashMap<&'static str, &'static Language>> = Lazy::new(|| {
+    LANGUAGES.iter().map(|lang| (lang.internal_code, lang)).collect()
+});
+
+static CODE_TO_INTERNAL_CODE_MAP: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
+    LANGUAGES.iter().map(|lang| (lang.code, lang.internal_code)).collect()
+});
+
+pub fn get_language_from_code(code: &String) -> Option<&'static Language>{
+    let code_str = code.as_str();
+    let internal_code = CODE_TO_INTERNAL_CODE_MAP.get(code_str).unwrap_or(&code_str);
+    LANGUAGES_MAP.get(internal_code).map(|v| &**v)
+}
+
+pub struct LangDetect{
+    pub language: &'static Language,
+    pub confidence: i32
+}
+
+pub fn detect_lang(q: &String) -> LangDetect {
+    let allowlist: Vec<Lang> = LANGUAGES
+        .iter()
+        .filter_map(|l| l.lang_detect.copied())
+        .collect();
+
+    let detector = Detector::with_allowlist(allowlist);
+    if let Some(info) = detector.detect(q) {
+        let lang = info.lang();
+        let confidence = info.confidence();
+
+        LANGUAGES.iter()
+            .find(|l| l.lang_detect == Some(&lang))
+            .map(|l| LangDetect { language: l, confidence: (confidence * 100.0) as i32 })
+            .unwrap_or(LangDetect {
+                language: &LANGUAGES[0],
+                confidence: 0,
+            })
+    } else {
+        LangDetect {
+            language: &LANGUAGES[0],
+            confidence: 0,
+        }
+    }
+}
