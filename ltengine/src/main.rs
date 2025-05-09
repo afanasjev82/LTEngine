@@ -4,7 +4,7 @@ use actix_web::{
 };
 use actix_multipart::form::{MultipartForm, text::Text as MPText};
 use actix_web_static_files::ResourceFiles;
-use std::{net::ToSocketAddrs, sync::Arc};
+use std::sync::Arc;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 
@@ -13,11 +13,13 @@ mod languages;
 mod models;
 mod llm;
 mod banner;
+mod prompt;
 
-use languages::LANGUAGES;
+use languages::{detect_lang, get_language_from_code, LANGUAGES};
 use error_response::ErrorResponse;
 use models::{MODELS, load_model};
 use banner::print_banner;
+use prompt::PromptBuilder;
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
@@ -62,6 +64,7 @@ struct TranslateRequest {
     q: Option<String>,
     source: Option<String>,
     target: Option<String>,
+    format: Option<String>,
     api_key: Option<String>,
     alternatives: Option<u32>
 }
@@ -71,6 +74,7 @@ struct MPTranslateRequest {
     q: Option<MPText<String>>,
     source: Option<MPText<String>>,
     target: Option<MPText<String>>,
+    format: Option<MPText<String>>,
     api_key: Option<MPText<String>>,
     alternatives: Option<MPText<u32>>
 }
@@ -80,16 +84,15 @@ impl MPTranslateRequest {
             q: self.q.map(|v| v.into_inner()),
             source: self.source.map(|v| v.into_inner()),
             target: self.target.map(|v| v.into_inner()),
+            format: self.format.map(|v| v.into_inner()),
             api_key: self.api_key.map(|v| v.into_inner()),
             alternatives: self.alternatives.map(|v| v.into_inner()),
         }
     }
 }
 
-#[post("/translate")]
-async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<Args>>, llm: actix_web::web::Data<Arc<llm::LLM>>) -> Result<HttpResponse, ErrorResponse> {
+async fn parse_payload(req: HttpRequest, payload: web::Payload) -> Result<TranslateRequest, ErrorResponse>{
     let content_type = req.headers().get(header::CONTENT_TYPE).map(|h| h.to_str().unwrap_or("")).unwrap_or("");
-
     let body: TranslateRequest;
 
     if content_type.starts_with("application/json") {
@@ -105,20 +108,12 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
         return Err(ErrorResponse{ error: "Unsupported content-type".to_string(), status: 400 });
     }
 
-    // Check key
-    if !args.api_key.is_empty() && body.api_key.is_none_or(|key| key != args.api_key){
-        return Err(ErrorResponse{
-            error: format!("Invalid API key"),
-            status: 403
-        });
-    }
+    return Ok(body);
+}
 
+fn check_params(body: &TranslateRequest, args: &Args, required_params: &[(&str, &Option<String>)]) -> Result<bool, ErrorResponse> {
     // Validate required params
-    for (key, value) in [
-        ("q", &body.q),
-        ("source", &body.source),
-        ("target", &body.target),
-    ] {
+    for (key, value) in required_params {
         if value.as_ref().is_none_or(|v| v.trim().is_empty()) {
             return Err(ErrorResponse {
                 error: format!("Invalid request: missing {} parameter", key),
@@ -126,24 +121,86 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
             });
         }
     }
-
-    // Check limits
-    let q = body.q.unwrap();
-    let source = body.source.unwrap();
-    let target = body.target.unwrap();
-
-    if q.len() > args.char_limit {
-        return Err(ErrorResponse{
-            error: format!("Invalid request: request ({}) exceeds text limit ({})", q.len(), args.char_limit),
-            status: 400
+    
+    // Check key
+    if !args.api_key.is_empty() && body.api_key.as_ref().is_none_or(|key| *key != args.api_key) {
+        return Err(ErrorResponse {
+            error: format!("Invalid API key"),
+            status: 403,
         });
     }
 
-    let llm = llm.get_ref();
-    let system = "You are an expert linguist, specializing in translation. You are able to capture the nuances of the languages you translate. You pay attention to masculine/feminine/plural and proper use of articles and grammar. You always provide natural sounding translations that fully preserve the meaning of the original text. You never provide explanations for your work. You always answer with the translated text and nothing else.".to_string();
-    let user: String = format!("Translate the text below from English to Italian.\n\nEnglish: {}\n\nItalian:\n", q).to_string();
+    let q = body.q.as_ref().unwrap();
+    if q.len() > args.char_limit {
+        return Err(ErrorResponse {
+            error: format!("Invalid request: request ({}) exceeds text limit ({})", q.len(), args.char_limit),
+            status: 400,
+        });
+    }
 
-    let translated_text = llm.run_prompt(system, user).unwrap_or(q);
+    Ok(true)
+}
+
+
+#[post("/detect")]
+async fn detect(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<Args>>) -> Result<HttpResponse, ErrorResponse> {
+    let body = parse_payload(req, payload).await?;
+    check_params(&body, &args, &[
+        ("q", &body.q)
+    ])?;
+
+    let q = body.q.unwrap();
+    let d = detect_lang(&q);
+
+    Ok(HttpResponse::Ok().json(serde_json::json!([{
+        "language": d.language.code,
+        "confidence": d.confidence
+    }])))
+}
+
+#[post("/translate")]
+async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<Args>>, llm: actix_web::web::Data<Arc<llm::LLM>>) -> Result<HttpResponse, ErrorResponse> {
+    let body = parse_payload(req, payload).await?;
+    check_params(&body, &args, &[
+        ("q", &body.q),
+        ("source", &body.source),
+        ("target", &body.target),
+    ])?;
+
+    let q = body.q.unwrap();
+    let source = body.source.unwrap();
+    let target = body.target.unwrap();
+    let format = body.format.unwrap_or("text".to_string());
+    let mut pb = PromptBuilder::new();
+
+    // TODO: add HTML support
+    if format != "text"{
+        return Err(ErrorResponse {
+            error: "Invalid format. Only \"text\" is supported.".to_string(),
+            status: 400,
+        });
+    }
+    
+    if source == "auto"{
+        pb.set_source_language("auto");
+    }else{
+        let src_lang = get_language_from_code(&source).ok_or_else(|| ErrorResponse {
+            error: format!("{} is not supported", source),
+            status: 400,
+        })?;
+        pb.set_source_language(src_lang.name);
+    }
+
+    let tgt_lang = get_language_from_code(&target).ok_or_else(|| ErrorResponse {
+        error: format!("{} is not supported", target),
+        status: 400,
+    })?;
+    pb.set_target_language(tgt_lang.name);
+
+    let llm = llm.get_ref();
+    let prompt = pb.build(&q);
+    
+    let translated_text = llm.run_prompt(prompt.system, prompt.user).unwrap_or(q.clone());
     let mut response = serde_json::json!({"translatedText": translated_text.trim()});
 
     // TODO: we just add this for compatibility for now
@@ -151,6 +208,15 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
     if body.alternatives.is_some_and(|v| v > 0) {
         response["alternatives"] = serde_json::json!([]);
     }
+
+    if source == "auto" {
+        let d = detect_lang(&q);
+        response["detectedLanguage"] = serde_json::json!({
+            "language": d.language.code,
+            "confidence": d.confidence
+        });
+    }
+
     Ok(HttpResponse::Ok().json(response))
 }
 
@@ -230,6 +296,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_frontend_settings)
             .service(translate)
             .service(translate_file)
+            .service(detect)
             .service(suggest)
             .service(ResourceFiles::new("/", generated))
     })
