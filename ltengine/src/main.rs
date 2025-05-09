@@ -56,7 +56,7 @@ struct Args {
 
     /// Enable verbose logging
     #[arg(short = 'v', long)]
-    verbose: bool,
+    verbose: bool
 }
 
 #[derive(Debug, Deserialize, Serialize)]
