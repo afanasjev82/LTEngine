@@ -31,7 +31,7 @@ struct Args {
     host: String,
 
     /// Port to bind to
-    #[arg(short, long, default_value_t = 5000)]
+    #[arg(short, long, default_value_t = 5050)]
     port: u16,
 
     /// Character limit for translation requests
