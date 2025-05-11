@@ -136,7 +136,7 @@ You can use the LTEngine API using the following bindings:
  - [ ] Cancel inference (stop generating tokens) when HTTP connections are aborted by clients. I'm unsure how this could done with actix-web.
  - [ ] Add support for `/translate_file` (ability to translate files).
  - [ ] Add support for sentence splitting. Currently text is sent to the LLM as-is, but longer texts (like documents) should be split into chunks, translated and merged back.
- - [ ] Better language detection for short texts (port [LaxiLang](https://github.com/LibreTranslate/LexiLang) to Rust)
+ - [ ] Better language detection for short texts (port [LexiLang](https://github.com/LibreTranslate/LexiLang) to Rust)
  - [ ] Test/add more LLM models aside from Gemma3
  - [ ] Create comparative benchmarks between LTEngine and proprietary software.
  - [ ] Add support for command line inference (run `./ltengine translate` as a command line app separate from `./ltengine server`)
