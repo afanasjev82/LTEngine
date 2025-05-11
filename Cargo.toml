@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
     "ltengine",
-    "llama-cpp-rs/examples/simple",
+    #"llama-cpp-rs/examples/simple",
 ]
 
 [workspace.dependencies]
