@@ -12,6 +12,8 @@ It is possible to run LTEngine entirely on the CPU, but an accelerator will grea
  * Metal (macOS)
  * Vulkan
 
+ The largest model (`gemma3-27b`) can fit on a single consumer RTX 3090 with 24G of VRAM.
+
 > ⚠️ LTEngine is in active development. Check the [Roadmap](#roadmap) for current limitations.
 
 
@@ -48,10 +50,12 @@ LTEngine supports any GGUF language model supported by [llama.cpp](https://githu
 
 | Model      | RAM Usage | GPU Usage | Notes                               | Default            |
 | ---------- | --------- | --------- | ----------------------------------- | ------------------ |
-| gemma3-1b  |           |           | Good for testing, poor translations |                    |
-| gemma3-4b  |           |           |                                     | :heavy_check_mark: |
-| gemma3-12b |           |           |                                     |                    |
-| gemma4-27b |           |           | Best translation quality, slowest   |                    |
+| gemma3-1b  | 1G        | 2G        | Good for testing, poor translations |                    |
+| gemma3-4b  | 4G        | 4G        |                                     | :heavy_check_mark: |
+| gemma3-12b | 8G        | 10G       |                                     |                    |
+| gemma4-27b | 16G       | 18G       | Best translation quality, slowest   |                    |
+
+Memory usage numbers are approximate.
 
 ### Simple
 
@@ -139,6 +143,7 @@ You can use the LTEngine API using the following bindings:
  - [ ] Better language detection for short texts (port [LexiLang](https://github.com/LibreTranslate/LexiLang) to Rust)
  - [ ] Test/add more LLM models aside from Gemma3
  - [ ] Create comparative benchmarks between LTEngine and proprietary software.
+ - [ ] Normalize punctuation, uppercase/lowercase
  - [ ] Add support for command line inference (run `./ltengine translate` as a command line app separate from `./ltengine server`)
  - [ ] Make ltengine available as a library, possibly creating bindings for other languages like Python.
  - [ ] Automated builds / CI
