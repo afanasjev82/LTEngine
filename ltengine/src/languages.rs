@@ -86,7 +86,7 @@ pub static LANGUAGES: Lazy<Vec<Language>> = Lazy::new(|| {
         .map(|&(code, alias, name)| {
             let targets: Vec<&str> = LANGS
                 .iter()
-                .filter_map(|&(c, a, _)| if c != code { Some(if a != "" { a } else { c }) } else { None })
+                .filter_map(|&(c, a, _)| Some(if a != "" { a } else { c }))
                 .collect();
 
             Language {

@@ -2,15 +2,18 @@
 
 Free and Open Source Local AI Machine Translation API, written in Rust, entirely self-hosted and compatible with [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate). Its translation capabilities are powered by large language models (LLMs) that run locally on your machine via [llama.cpp](https://github.com/ggml-org/llama.cpp). 
 
-![Translation](https://github.com/user-attachments/assets/457696b5-dbff-40ab-a18e-7bfb152c5121)
+![Translation](https://github.com/user-attachments/assets/37dd4e20-382b-459d-bcc1-5de3ed4b4c18)
 
 The LLMs in LTEngine are much larger than the lightweight transformer models in [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate). Thus memory usage and speed are traded off for quality of outputs. 
 
 It is possible to run LTEngine entirely on the CPU, but an accelerator will greatly improve performance. Supported accelerators currently include:
 
  * CUDA
- * Vulkan
  * Metal (macOS)
+ * Vulkan
+
+> ⚠️ LTEngine is in active development. Check the [Roadmap](#roadmap) for current limitations.
+
 
 ## Requirements
 
@@ -24,25 +27,31 @@ It is possible to run LTEngine entirely on the CPU, but an accelerator will grea
 ```bash
 git clone https://github.com/LibreTranslate/LTEngine --recursive
 cd LTEngine
-cargo build [--features cuda,vulkan,metal] --bin ltengine --release
+cargo build [--features cuda,vulkan,metal] --release
 ```
 
 ## Run
 
 ```bash
-./target/release/ltengine [--host 0.0.0.0] [--port 5050] [-m gemma3-4b | --model-file path-to-model.gguf]
+./target/release/ltengine
+```
+
+To run different LLM models:
+
+```bash
+./target/release/ltengine -m gemma3-12b [--model-file /path/to/model.gguf]
 ```
 
 ## Models
 
 LTEngine supports any GGUF language model supported by [llama.cpp](https://github.com/ggml-org/llama.cpp). You can pass a path to load a custom .gguf model using the `--model-file` parameter. Otherwise LTEngine will download one of the Gemma3 models based on the `-m` parameter: 
 
-| Model      | RAM Usage | GPU Usage | Notes                     | Default            |
-| ---------- | --------- | --------- | ------------------------- | ------------------ |
-| gemma3-1b  |           |           | Only good for development |                    |
-| gemma3-4b  |           |           |                           | :heavy_check_mark: |
-| gemma3-12b |           |           |                           |                    |
-| gemma4-27b |           |           | Best translation quality  |                    |
+| Model      | RAM Usage | GPU Usage | Notes                               | Default            |
+| ---------- | --------- | --------- | ----------------------------------- | ------------------ |
+| gemma3-1b  |           |           | Good for testing, poor translations |                    |
+| gemma3-4b  |           |           |                                     | :heavy_check_mark: |
+| gemma3-12b |           |           |                                     |                    |
+| gemma4-27b |           |           | Best translation quality, slowest   |                    |
 
 ### Simple
 
@@ -121,6 +130,16 @@ You can use the LTEngine API using the following bindings:
 - Ruby: <https://github.com/noesya/libretranslate>
 - R: <https://github.com/myanesp/libretranslateR>
 
+## Roadmap
+
+ - [ ] Remove mutex block that currently limits the software to process one single translation request at a time due to a possible bug in llama.cpp. 
+ - [ ] Cancel inference (stop generating tokens) when HTTP connections are aborted by clients. I'm unsure how this could done with actix-web.
+ - [ ] Add support for `/translate_file` (ability to translate files).
+ - [ ] Add support for sentence splitting. Currently text is sent to the LLM as-is, but longer texts (like documents) should be split into chunks, translated and merged back.
+ - [ ] Better language detection for short texts (port [LaxiLang](https://github.com/LibreTranslate/LexiLang)) to Rust)
+ - [ ] Test/add more LLM models aside from Gemma3
+ - [ ] Create comparative benchmarks between LTEngine and proprietary software.
+ - [ ] Your ideas? We welcome contributions.
 
 ## Contributing
 
