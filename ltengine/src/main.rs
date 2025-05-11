@@ -200,7 +200,12 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
     let llm = llm.get_ref();
     let prompt = pb.build(&q);
     
-    let translated_text = llm.run_prompt(prompt.system, prompt.user).unwrap_or(q.clone());
+    let translated_text = if source != target {
+        llm.run_prompt(prompt.system, prompt.user).unwrap_or(q.clone())
+    }else{
+        q.clone()
+    };
+    
     let mut response = serde_json::json!({"translatedText": translated_text.trim()});
 
     // TODO: we just add this for compatibility for now
