@@ -141,6 +141,50 @@ fn check_params(body: &TranslateRequest, args: &Args, required_params: &[(&str, 
     Ok(true)
 }
 
+fn improve_formatting(q: &String, translation: &String) -> String {
+    if q.len() == 0 {
+        return String::new();
+    }
+
+    if translation.len() == 0 {
+        return q.clone()
+    }
+
+    let q_last_char = q.chars().rev().next().unwrap();
+    let translation_last_char = translation.chars().rev().next().unwrap();
+    let mut result = translation.clone();
+
+    const PUNCTUATION_CHARS: [char; 6] = ['!', '?', '.', ',', ';', '。'];
+    if PUNCTUATION_CHARS.contains(&q_last_char){
+        if q_last_char != translation_last_char{
+            if PUNCTUATION_CHARS.contains(&translation_last_char){
+                result.pop();
+            }
+
+            result.push(q_last_char);
+        }
+    }else if PUNCTUATION_CHARS.contains(&translation_last_char) {
+        result.pop();   
+    }
+
+    if q.chars().all(|c| c.is_lowercase()) {
+        result = result.to_lowercase();
+    }
+
+    if q.chars().all(|c| c.is_uppercase()) {
+        result = result.to_uppercase();
+    }
+
+    if let (Some(q0), Some(r0)) = (q.chars().next(), result.chars().next()) {
+        if q0.is_lowercase() && r0.is_uppercase() {
+            result.replace_range(0..r0.len_utf8(), &r0.to_uppercase().to_string());
+        }else if q0.is_uppercase() && r0.is_lowercase() {
+            result.replace_range(0..r0.len_utf8(), &r0.to_lowercase().to_string());
+        }
+    }
+
+    result.trim().to_string()
+}
 
 #[post("/detect")]
 async fn detect(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<Args>>) -> Result<HttpResponse, ErrorResponse> {
@@ -206,7 +250,7 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
         q.clone()
     };
     
-    let mut response = serde_json::json!({"translatedText": translated_text.trim()});
+    let mut response = serde_json::json!({"translatedText": improve_formatting(&q, &translated_text)});
 
     // TODO: we just add this for compatibility for now
     // we should allow multiple alternatives to be generated
