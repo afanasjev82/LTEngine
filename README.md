@@ -143,7 +143,6 @@ You can use the LTEngine API using the following bindings:
  - [ ] Better language detection for short texts (port [LexiLang](https://github.com/LibreTranslate/LexiLang) to Rust)
  - [ ] Test/add more LLM models aside from Gemma3
  - [ ] Create comparative benchmarks between LTEngine and proprietary software.
- - [ ] Normalize punctuation, uppercase/lowercase
  - [ ] Add support for command line inference (run `./ltengine translate` as a command line app separate from `./ltengine server`)
  - [ ] Make ltengine available as a library, possibly creating bindings for other languages like Python.
  - [ ] Automated builds / CI
