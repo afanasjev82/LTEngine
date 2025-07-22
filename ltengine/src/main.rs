@@ -204,6 +204,16 @@ async fn detect(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<Arg
     }])))
 }
 
+fn check_format(format: &str) -> Result<bool, ErrorResponse> {
+    match format {
+        "text" | "html" => Ok(true),
+        _ => Err(ErrorResponse {
+            error: "Invalid format. Supported formats: text, html".to_string(),
+            status: 400,
+        })
+    }
+}
+
 #[post("/translate")]
 async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<Args>>, llm: actix_web::web::Data<Arc<llm::LLM>>) -> Result<HttpResponse, ErrorResponse> {
     let body = parse_payload(req, payload).await?;
@@ -217,15 +227,12 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
     let source = body.source.unwrap();
     let target = body.target.unwrap();
     let format = body.format.unwrap_or("text".to_string());
+    check_format(&format)?;
+    
     let mut pb = PromptBuilder::new();
+    pb.set_format(&format);
 
     // TODO: add HTML support
-    if format != "text"{
-        return Err(ErrorResponse {
-            error: "Invalid format. Only \"text\" is supported.".to_string(),
-            status: 400,
-        });
-    }
     
     if source == "auto"{
         pb.set_source_language("auto");
