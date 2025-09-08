@@ -2,38 +2,16 @@ name: Build and Test
 
 on:
   push:
-    tags:
-      - 'v*'
-  pull_request:
-    branches:
-      - main
 
 jobs:
   build:
     name: Build and Test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        features:
-          - ""
-          - "cuda"
-          - "vulkan"
-          - "metal"
-        include:
-          - os: macos-latest
-            features: "metal"
-          - os: windows-latest
-            features: "cuda"
-          - os: windows-latest
-            features: "vulkan"
-          - os: ubuntu-latest
-            features: "cuda"
-          - os: ubuntu-latest
-            features: "vulkan"
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
+        with:
+          submodules: 'recursive'
 
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
@@ -42,25 +20,13 @@ jobs:
           override: true
 
       - name: Build
-        run: |
-          if [ "${{ matrix.features }}" != "" ]; then
-            cargo build --release --features ${{ matrix.features }}
-          else
-            cargo build --release
-          fi
+        run: cargo build --release
 
       - name: Run Tests
-        run: |
-          if [ "${{ matrix.features }}" != "" ]; then
-            cargo test --features ${{ matrix.features }}
-          else
-            cargo test
-          fi
+        run: cargo test
 
       - name: Upload Artifact
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}-${{ matrix.features }}
-          path: |
-        target/release/ltengine*
+          name: ubuntu
+          path: target/release/*
