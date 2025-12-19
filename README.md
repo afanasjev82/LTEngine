@@ -53,7 +53,7 @@ LTEngine supports any GGUF language model supported by [llama.cpp](https://githu
 | gemma3-1b  | 1G        | 2G        | Good for testing, poor translations |                    |
 | gemma3-4b  | 4G        | 4G        |                                     | :heavy_check_mark: |
 | gemma3-12b | 8G        | 10G       |                                     |                    |
-| gemma4-27b | 16G       | 18G       | Best translation quality, slowest   |                    |
+| gemma3-27b | 16G       | 18G       | Best translation quality, slowest   |                    |
 
 Memory usage numbers are approximate.
 
