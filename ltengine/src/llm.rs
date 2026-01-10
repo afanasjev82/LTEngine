@@ -47,9 +47,11 @@ impl LLM {
         Ok(LLM { backend, model, prompt_lock: Mutex::new(true) })
     }
 
-    pub fn create_context(&self, ctx_size: i32) -> Result<LLMContext>{
+    pub fn create_context(&self, ctx_size: i32) -> Result<LLMContext<'_>>{
         let ctx_params =
-            LlamaContextParams::default().with_n_ctx(Some(NonZeroU32::new(ctx_size as u32).unwrap()));
+            LlamaContextParams::default()
+                .with_n_ctx(Some(NonZeroU32::new(ctx_size as u32).unwrap()))
+                .with_n_batch(ctx_size as u32);  // Set n_batch to match n_ctx to avoid assertion failure with large texts
 
         // Use all threads
         // ctx_params = ctx_params.with_n_threads(threads);
