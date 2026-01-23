@@ -299,6 +299,11 @@ async fn get_languages() -> impl Responder {
     HttpResponse::Ok().json(&*LANGUAGES)
 }
 
+#[get("/health")]
+async fn health() -> impl Responder {
+    HttpResponse::Ok().finish()
+}
+
 #[get("/frontend/settings")]
 async fn get_frontend_settings(args: web::Data<Arc<Args>>) -> impl Responder {
     HttpResponse::Ok().json(serde_json::json!({
@@ -350,6 +355,7 @@ async fn main() -> std::io::Result<()> {
             // .service(index)
             .app_data(web::Data::new(llm.clone()))
             .app_data(web::Data::new(args.clone()))
+            .service(health)
             .service(get_languages)
             .service(get_frontend_settings)
             .service(translate)
