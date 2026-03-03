@@ -10,13 +10,19 @@ use serde::{Deserialize, Serialize};
 
 mod error_response;
 mod languages;
+#[cfg(feature = "local")]
 mod models;
+#[cfg(feature = "local")]
+mod llm;
+#[cfg(feature = "api")]
+#[path = "llm_api.rs"]
 mod llm;
 mod banner;
 mod prompt;
 
 use languages::{detect_lang, get_language_from_code, LANGUAGES};
 use error_response::ErrorResponse;
+#[cfg(feature = "local")]
 use models::{MODELS, load_model};
 use banner::print_banner;
 use prompt::PromptBuilder;
@@ -38,11 +44,13 @@ struct Args {
     #[arg(long, default_value_t = 5000)]
     char_limit: usize,
 
-    /// Model to use
+    /// Model to use (local inference)
+    #[cfg(feature = "local")]
     #[arg(short='m', long, value_parser = MODELS.keys().collect::<Vec<_>>(), default_value = "gemma3-4b")]
     model: String,
 
-    /// Path to .gguf model file
+    /// Path to .gguf model file (local inference)
+    #[cfg(feature = "local")]
     #[arg(long, default_value = "")]
     model_file: String,
 
@@ -50,9 +58,25 @@ struct Args {
     #[arg(long, default_value = "")]
     api_key: String,  
 
-    /// Use CPU only
+    /// Use CPU only (local inference)
+    #[cfg(feature = "local")]
     #[arg(long)]
     cpu: bool,
+
+    /// OpenAI-compatible API URL (e.g. http://localhost:8080)
+    #[cfg(feature = "api")]
+    #[arg(long)]
+    llm_url: String,
+
+    /// API key for the LLM API
+    #[cfg(feature = "api")]
+    #[arg(long, default_value = "")]
+    llm_api_key: String,
+
+    /// Model name for the LLM API (e.g. gpt-4o-mini)
+    #[cfg(feature = "api")]
+    #[arg(long)]
+    llm_model: String,
 
     /// Enable verbose logging
     #[arg(short = 'v', long)]
@@ -254,7 +278,10 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
     let prompt = pb.build(&q);
     
     let translated_text = if source != target {
-        llm.run_prompt(prompt.system, prompt.user).unwrap_or(q.clone())
+        #[cfg(feature = "api")]
+        { llm.run_prompt(prompt.system, prompt.user).await.unwrap_or(q.clone()) }
+        #[cfg(not(feature = "api"))]
+        { llm.run_prompt(prompt.system, prompt.user).unwrap_or(q.clone()) }
     }else{
         q.clone()
     };
@@ -334,17 +361,27 @@ async fn main() -> std::io::Result<()> {
     let host = args.host.clone();
     let port = args.port;
 
-    let model_path = load_model(&args.model, &args.model_file).unwrap_or_else(|err| {
-        eprintln!("Failed to load model: {}", err);
-        std::process::exit(1);
-    });
-    
-    println!("Loading model: {}", model_path.display());
+    #[cfg(feature = "local")]
+    let llm = {
+        let model_path = load_model(&args.model, &args.model_file).unwrap_or_else(|err| {
+            eprintln!("Failed to load model: {}", err);
+            std::process::exit(1);
+        });
+        println!("Loading model: {}", model_path.display());
+        Arc::new(llm::LLM::new(model_path, args.cpu, args.verbose).unwrap_or_else(|err| {
+            eprintln!("Failed to initialize LLM: {}", err);
+            std::process::exit(1);
+        }))
+    };
 
-    let llm = Arc::new(llm::LLM::new(model_path, args.cpu, args.verbose).unwrap_or_else(|err| {
-        eprintln!("Failed to initialize LLM: {}", err);
-        std::process::exit(1);
-    }));
+    #[cfg(feature = "api")]
+    let llm = {
+        println!("Using external LLM API: {}", args.llm_url);
+        Arc::new(llm::LLM::new(args.llm_url.clone(), args.llm_api_key.clone(), args.llm_model.clone()).unwrap_or_else(|err| {
+            eprintln!("Failed to initialize LLM API client: {}", err);
+            std::process::exit(1);
+        }))
+    };
 
     print_banner();
 
