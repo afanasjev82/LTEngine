@@ -4,7 +4,7 @@ use llama_cpp_2::model::params::LlamaModelParams;
 use llama_cpp_2::model::{LlamaModel, LlamaChatMessage};
 use llama_cpp_2::token::LlamaToken;
 use llama_cpp_2::context::LlamaContext;
-use llama_cpp_2::model::{AddBos, Special};
+use llama_cpp_2::model::AddBos;
 use llama_cpp_2::llama_batch::LlamaBatch;
 use llama_cpp_2::sampling::LlamaSampler;
 use llama_cpp_2::{send_logs_to_tracing, LogOptions};
@@ -140,7 +140,7 @@ impl LLMContext<'_>{
                     break;
                 }
                     
-                let output_bytes = self.llm.model.token_to_bytes(token, Special::Tokenize)?;
+                let output_bytes = self.llm.model.token_to_piece_bytes(token, 32, true, None)?;
                 // use `Decoder.decode_to_string()` to avoid the intermediate buffer
                 let mut output_string = String::with_capacity(32);
                 let _decode_result = decoder.decode_to_string(&output_bytes, &mut output_string, false);
