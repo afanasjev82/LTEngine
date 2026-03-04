@@ -140,10 +140,7 @@ impl LLMContext<'_>{
                     break;
                 }
                     
-                let output_bytes = self.llm.model.token_to_piece_bytes(token, 32, true, None)?;
-                // use `Decoder.decode_to_string()` to avoid the intermediate buffer
-                let mut output_string = String::with_capacity(32);
-                let _decode_result = decoder.decode_to_string(&output_bytes, &mut output_string, false);
+                let output_string = self.llm.model.token_to_piece(token, &mut decoder, true, None)?;
                 output.push_str(&output_string);
 
                 batch.clear();
