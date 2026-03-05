@@ -73,9 +73,9 @@ struct Args {
     #[arg(long, default_value = "")]
     llm_api_key: String,
 
-    /// Model name for the LLM API (e.g. gpt-4o-mini)
+    /// Model name for the LLM API (auto-resolved if not provided)
     #[cfg(feature = "api")]
-    #[arg(long)]
+    #[arg(long, default_value = "")]
     llm_model: String,
 
     /// Enable verbose logging
@@ -377,10 +377,20 @@ async fn main() -> std::io::Result<()> {
     #[cfg(feature = "api")]
     let llm = {
         println!("Using external LLM API: {}", args.llm_url);
-        Arc::new(llm::LLM::new(args.llm_url.clone(), args.llm_api_key.clone(), args.llm_model.clone()).unwrap_or_else(|err| {
+        let mut llm_instance = llm::LLM::new(args.llm_url.clone(), args.llm_api_key.clone(), args.llm_model.clone()).unwrap_or_else(|err| {
             eprintln!("Failed to initialize LLM API client: {}", err);
             std::process::exit(1);
-        }))
+        });
+        if args.llm_model.is_empty() {
+            match llm_instance.resolve_model().await {
+                Ok(model_name) => println!("Resolved model: {}", model_name),
+                Err(err) => {
+                    eprintln!("Failed to resolve model from server: {}", err);
+                    std::process::exit(1);
+                }
+            }
+        }
+        Arc::new(llm_instance)
     };
 
     print_banner();
