@@ -7,13 +7,13 @@ members = [
 
 [workspace.dependencies]
 # core llama-cpp-2 deps
-thiserror = "1"
+thiserror = "2"
 tracing = "0.1"
 tracing-core = "0.1"
 bindgen = "0.72.1"
 cc = "1.2.49"
 encoding_rs = "0.8.35"
-hf-hub = "0.4.3"
+hf-hub = "0.5.0"
 tracing-subscriber = { version = "0.3", features = ["json"] }
 
 [workspace.lints.rust]
