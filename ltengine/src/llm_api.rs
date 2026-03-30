@@ -1,10 +1,12 @@
 use anyhow::{Result, Context};
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
 pub struct LLM {
     url: String,
     api_key: String,
     model: String,
+    max_tokens: Option<u32>,
     client: reqwest::Client,
 }
 
@@ -19,6 +21,8 @@ struct ChatCompletionRequest {
     model: String,
     messages: Vec<ChatMessage>,
     temperature: f32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    max_tokens: Option<u32>,
 }
 
 #[derive(Deserialize)]
@@ -47,9 +51,12 @@ struct ModelEntry {
 }
 
 impl LLM {
-    pub fn new(url: String, api_key: String, model: String) -> Result<Self> {
-        let client = reqwest::Client::new();
-        Ok(LLM { url, api_key, model, client })
+    pub fn new(url: String, api_key: String, model: String, max_tokens: Option<u32>, timeout_secs: u64) -> Result<Self> {
+        let client = reqwest::Client::builder()
+            .timeout(Duration::from_secs(timeout_secs))
+            .build()
+            .with_context(|| "Failed to build HTTP client")?;
+        Ok(LLM { url, api_key, model, max_tokens, client })
     }
 
     pub async fn resolve_model(&mut self) -> Result<String> {
@@ -91,6 +98,7 @@ impl LLM {
                 ChatMessage { role: "user".to_string(), content: user },
             ],
             temperature: 0.0,
+            max_tokens: self.max_tokens,
         };
 
         let mut req = self.client.post(&endpoint)
