@@ -78,6 +78,16 @@ struct Args {
     #[arg(long, default_value = "")]
     llm_model: String,
 
+    /// Maximum output tokens per LLM request (0 = no limit)
+    #[cfg(feature = "api")]
+    #[arg(long, default_value_t = 0)]
+    llm_max_tokens: u32,
+
+    /// HTTP timeout in seconds for LLM API requests (0 = no timeout)
+    #[cfg(feature = "api")]
+    #[arg(long, default_value_t = 120)]
+    llm_timeout: u64,
+
     /// Enable verbose logging
     #[arg(short = 'v', long)]
     verbose: bool
@@ -377,7 +387,9 @@ async fn main() -> std::io::Result<()> {
     #[cfg(feature = "api")]
     let llm = {
         println!("Using external LLM API: {}", args.llm_url);
-        let mut llm_instance = llm::LLM::new(args.llm_url.clone(), args.llm_api_key.clone(), args.llm_model.clone()).unwrap_or_else(|err| {
+        let max_tokens = if args.llm_max_tokens > 0 { Some(args.llm_max_tokens) } else { None };
+        let timeout_secs = if args.llm_timeout > 0 { args.llm_timeout } else { 0 };
+        let mut llm_instance = llm::LLM::new(args.llm_url.clone(), args.llm_api_key.clone(), args.llm_model.clone(), max_tokens, timeout_secs).unwrap_or_else(|err| {
             eprintln!("Failed to initialize LLM API client: {}", err);
             std::process::exit(1);
         });
