@@ -1638,7 +1638,7 @@ checksum = "11d3d7f243d5c5a8b9bb5d6dd2b1602c0cb0b9db1621bafc7ed66e35ff9fe092"
 
 [[package]]
 name = "llama-cpp-2"
-version = "0.1.139"
+version = "0.1.141"
 dependencies = [
  "encoding_rs",
  "enumflags2",
@@ -1655,7 +1655,7 @@ dependencies = [
 
 [[package]]
 name = "llama-cpp-sys-2"
-version = "0.1.139"
+version = "0.1.141"
 dependencies = [
  "bindgen",
  "cc",
@@ -2812,9 +2812,9 @@ dependencies = [
 
 [[package]]
 name = "toktrie"
-version = "1.6.1"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06f161a10057ac758fe4d1bac8d86b1ce07e8a2255ee4f9eec1d408bed7be125"
+checksum = "0310776df61c26b98e6ed7c3629de5131e0c8731439350b79152b7f52468229a"
 dependencies = [
  "anyhow",
  "bytemuck",
