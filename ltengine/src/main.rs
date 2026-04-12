@@ -3,6 +3,7 @@ use actix_web::{
     HttpServer, Responder, http::header, FromRequest
 };
 use actix_multipart::form::{MultipartForm, text::Text as MPText};
+use actix_web_prom::PrometheusMetricsBuilder;
 use actix_web_static_files::ResourceFiles;
 use std::sync::Arc;
 use clap::Parser;
@@ -407,10 +408,16 @@ async fn main() -> std::io::Result<()> {
 
     print_banner();
 
+    let prometheus = PrometheusMetricsBuilder::new("ltengine")
+        .endpoint("/metrics")
+        .build()
+        .unwrap();
+
     let server = HttpServer::new(move || {
         let generated = generate();
 
         App::new()
+            .wrap(prometheus.clone())
             // .service(index)
             .app_data(web::Data::new(llm.clone()))
             .app_data(web::Data::new(args.clone()))
