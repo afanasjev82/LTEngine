@@ -1,6 +1,6 @@
 [package]
 name = "ltengine"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2024"
 
 [dependencies]
@@ -13,15 +13,15 @@ actix-web-static-files = "4.1.1"
 static-files = "0.2.5"
 hf-hub = { version = "0.5.0" }
 anyhow = "1.0.97"
-llama-cpp-2 = { path = "../llama-cpp-rs/llama-cpp-2", version = "0.1.146" }
+llama-cpp-bindings = { path = "../llama-cpp-rs/llama-cpp-bindings" }
 encoding_rs = "0.8.35"
 actix-multipart = "0.7.2"
 whatlang = "0.18.0"
 
 [features]
-cuda = ["llama-cpp-2/cuda"]
-metal = ["llama-cpp-2/metal"]
-vulkan = ["llama-cpp-2/vulkan"]
+cuda = ["llama-cpp-bindings/cuda"]
+metal = ["llama-cpp-bindings/metal"]
+vulkan = ["llama-cpp-bindings/vulkan"]
 
 [build-dependencies]
 static-files = "0.2.5"
