@@ -18,7 +18,7 @@ whatlang = "0.18.0"
 
 # Local inference (default)
 hf-hub = { version = "0.5.0", optional = true }
-llama-cpp-2 = { path = "../llama-cpp-rs/llama-cpp-2", version = "0.1.146", optional = true }
+llama-cpp-bindings = { path = "../llama-cpp-rs/llama-cpp-bindings", optional = true }
 encoding_rs = { version = "0.8.35", optional = true }
 
 # API inference
@@ -26,11 +26,11 @@ reqwest = { version = "0.13", default-features = false, features = ["json", "nat
 
 [features]
 default = ["local"]
-local = ["dep:llama-cpp-2", "dep:hf-hub", "dep:encoding_rs"]
+local = ["dep:llama-cpp-bindings", "dep:hf-hub", "dep:encoding_rs"]
 api = ["dep:reqwest"]
-cuda = ["local", "llama-cpp-2/cuda"]
-metal = ["local", "llama-cpp-2/metal"]
-vulkan = ["local", "llama-cpp-2/vulkan"]
+cuda = ["local", "llama-cpp-bindings/cuda"]
+metal = ["local", "llama-cpp-bindings/metal"]
+vulkan = ["local", "llama-cpp-bindings/vulkan"]
 
 [build-dependencies]
 static-files = "0.2.5"
