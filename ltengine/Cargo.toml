@@ -18,7 +18,7 @@ whatlang = "0.18.0"
 
 # Local inference (default)
 hf-hub = { version = "0.5.0", optional = true }
-llama-cpp-bindings = { path = "../llama-cpp-rs/llama-cpp-bindings", optional = true }
+llama-cpp-bindings = { git = "https://github.com/intentee/llama-cpp-bindings", rev = "aeb60a75fdb254c561ba0eecb9105bbc16302113", optional = true }
 encoding_rs = { version = "0.8.35", optional = true }
 
 # API inference

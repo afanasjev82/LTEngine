@@ -2,10 +2,6 @@
 resolver = "2"
 members = [
     "ltengine",
-    #"llama-cpp-rs/examples/simple",
-]
-exclude = [
-    "llama-cpp-rs",
 ]
 
 [workspace.dependencies]
