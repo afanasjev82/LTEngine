@@ -20,3 +20,7 @@ build/
 .vscode/
 .claude/
 docs/internal/
+
+# Understand-anything
+.understand-anything/intermediate/
+.understand-anything/diff-overlay.json
