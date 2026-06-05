@@ -1,0 +1,2455 @@
+{
+  "nodes": [
+    {
+      "id": "file:ltengine/src/banner.rs",
+      "type": "file",
+      "name": "banner.rs",
+      "filePath": "ltengine/src/banner.rs",
+      "summary": "Prints the ASCII art banner and version information on application startup.",
+      "tags": [
+        "utility",
+        "ui",
+        "startup"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/banner.rs:print_banner",
+      "type": "function",
+      "name": "print_banner",
+      "filePath": "ltengine/src/banner.rs",
+      "lineRange": [
+        1,
+        14
+      ],
+      "summary": "Prints the LTEngine ASCII art banner and version string to stdout.",
+      "tags": [
+        "utility",
+        "ui",
+        "startup"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ltengine/src/error_response.rs",
+      "type": "file",
+      "name": "error_response.rs",
+      "filePath": "ltengine/src/error_response.rs",
+      "summary": "Defines the ErrorResponse struct and its actix-web response trait implementations for consistent API error handling.",
+      "tags": [
+        "api-handler",
+        "error-handling",
+        "actix-web"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:ltengine/src/error_response.rs:ErrorResponse",
+      "type": "class",
+      "name": "ErrorResponse",
+      "filePath": "ltengine/src/error_response.rs",
+      "lineRange": [
+        8,
+        11
+      ],
+      "summary": "Structured API error response containing an error message and HTTP status code.",
+      "tags": [
+        "data-model",
+        "error-handling",
+        "api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ltengine/src/languages.rs",
+      "type": "file",
+      "name": "languages.rs",
+      "filePath": "ltengine/src/languages.rs",
+      "summary": "Defines supported translation languages, language detection using lingua-rs, and lookup utilities.",
+      "tags": [
+        "data-model",
+        "language-detection",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:ltengine/src/languages.rs:Language",
+      "type": "class",
+      "name": "Language",
+      "filePath": "ltengine/src/languages.rs",
+      "lineRange": [
+        59,
+        69
+      ],
+      "summary": "Represents a supported language with its code, name, target languages, and detection metadata.",
+      "tags": [
+        "data-model",
+        "language",
+        "serialization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/languages.rs:detect_lang",
+      "type": "function",
+      "name": "detect_lang",
+      "filePath": "ltengine/src/languages.rs",
+      "lineRange": [
+        122,
+        146
+      ],
+      "summary": "Detects the language of input text using lingua-rs and returns the best matching Language with confidence.",
+      "tags": [
+        "language-detection",
+        "utility",
+        "api-handler"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ltengine/src/llm.rs",
+      "type": "file",
+      "name": "llm.rs",
+      "filePath": "ltengine/src/llm.rs",
+      "summary": "Wraps llama-cpp-rs to provide LLM model loading, context creation, and text generation via chat templates.",
+      "tags": [
+        "service",
+        "llm",
+        "llama-cpp",
+        "inference"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Uses llama-cpp-rs bindings with chat templates, token sampling chains, and async-safe prompt locking."
+    },
+    {
+      "id": "class:ltengine/src/llm.rs:LLM",
+      "type": "class",
+      "name": "LLM",
+      "filePath": "ltengine/src/llm.rs",
+      "lineRange": [
+        17,
+        21
+      ],
+      "summary": "Main LLM wrapper holding the llama-cpp backend, loaded model, and a mutex for serializing prompt execution.",
+      "tags": [
+        "service",
+        "llm",
+        "singleton"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:ltengine/src/llm.rs:LLMContext",
+      "type": "class",
+      "name": "LLMContext",
+      "filePath": "ltengine/src/llm.rs",
+      "lineRange": [
+        23,
+        27
+      ],
+      "summary": "Holds a reference to the LLM instance and a llama-cpp decoding context with its configured size.",
+      "tags": [
+        "service",
+        "llm",
+        "context"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/llm.rs:new",
+      "type": "function",
+      "name": "new",
+      "filePath": "ltengine/src/llm.rs",
+      "lineRange": [
+        30,
+        49
+      ],
+      "summary": "Constructs an LLM instance by initializing the llama-cpp backend and loading a model from disk.",
+      "tags": [
+        "constructor",
+        "llm",
+        "model-loading"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:ltengine/src/llm.rs:create_context",
+      "type": "function",
+      "name": "create_context",
+      "filePath": "ltengine/src/llm.rs",
+      "lineRange": [
+        51,
+        64
+      ],
+      "summary": "Creates a new LLMContext with the specified context size for token decoding.",
+      "tags": [
+        "llm",
+        "context",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:ltengine/src/llm.rs:run_prompt",
+      "type": "function",
+      "name": "run_prompt",
+      "filePath": "ltengine/src/llm.rs",
+      "lineRange": [
+        66,
+        91
+      ],
+      "summary": "Runs a chat-formatted prompt through the LLM, applying the model chat template and returning generated text.",
+      "tags": [
+        "llm",
+        "inference",
+        "prompt"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:ltengine/src/llm.rs:process",
+      "type": "function",
+      "name": "process",
+      "filePath": "ltengine/src/llm.rs",
+      "lineRange": [
+        95,
+        163
+      ],
+      "summary": "Tokenizes input, runs sampling with a full sampler chain (dry, penalties, top-k, typical, top-p, min-p, xtc, temp, dist), and decodes output tokens.",
+      "tags": [
+        "llm",
+        "inference",
+        "sampling",
+        "tokenization"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:ltengine/src/models.rs",
+      "type": "file",
+      "name": "models.rs",
+      "filePath": "ltengine/src/models.rs",
+      "summary": "Defines model definitions for local and HuggingFace remote models, with a loader that downloads from HF when needed.",
+      "tags": [
+        "data-model",
+        "model-loading",
+        "huggingface"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:ltengine/src/models.rs:load",
+      "type": "function",
+      "name": "load",
+      "filePath": "ltengine/src/models.rs",
+      "lineRange": [
+        33,
+        50
+      ],
+      "summary": "Resolves a model source: returns a local path directly or downloads from HuggingFace via the HF API.",
+      "tags": [
+        "model-loading",
+        "huggingface",
+        "io"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:ltengine/src/models.rs:load_model",
+      "type": "function",
+      "name": "load_model",
+      "filePath": "ltengine/src/models.rs",
+      "lineRange": [
+        53,
+        68
+      ],
+      "summary": "Resolves a model identifier to a local file path, downloading from HuggingFace if the model is remote.",
+      "tags": [
+        "model-loading",
+        "utility",
+        "huggingface"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ltengine/src/prompt.rs",
+      "type": "file",
+      "name": "prompt.rs",
+      "filePath": "ltengine/src/prompt.rs",
+      "summary": "Builds structured system and user prompts for the translation LLM, supporting text and HTML formats with auto-detection.",
+      "tags": [
+        "utility",
+        "prompt-engineering",
+        "llm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:ltengine/src/prompt.rs:PromptBuilder",
+      "type": "class",
+      "name": "PromptBuilder",
+      "filePath": "ltengine/src/prompt.rs",
+      "lineRange": [
+        1,
+        5
+      ],
+      "summary": "Builder for constructing translation prompts with source/target language and format configuration.",
+      "tags": [
+        "builder",
+        "prompt-engineering",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/prompt.rs:build",
+      "type": "function",
+      "name": "build",
+      "filePath": "ltengine/src/prompt.rs",
+      "lineRange": [
+        37,
+        59
+      ],
+      "summary": "Constructs the final Prompt with system instructions and formatted user query based on builder state.",
+      "tags": [
+        "builder",
+        "prompt-engineering",
+        "llm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "pipeline:.github/workflows/build.yml",
+      "type": "pipeline",
+      "name": "build.yml",
+      "filePath": ".github/workflows/build.yml",
+      "summary": "GitHub Actions workflow that builds the Rust project in release mode, runs the test suite, and uploads the compiled binaries as artifacts on every push.",
+      "tags": [
+        "ci-cd",
+        "deployment",
+        "build-system",
+        "rust"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Cargo.toml",
+      "type": "config",
+      "name": "Cargo.toml",
+      "filePath": "Cargo.toml",
+      "summary": "Rust workspace configuration defining a single-member workspace for the ltengine crate, shared dependencies including llama-cpp-2 core libraries, and lint rules enforcing documentation and clippy pedantic warnings.",
+      "tags": [
+        "configuration",
+        "rust",
+        "workspace",
+        "build-system"
+      ],
+      "complexity": "simple",
+      "languageNotes": "Uses Cargo workspace resolver v2 with shared dependencies and workspace-level lints for rust and clippy."
+    },
+    {
+      "id": "document:README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "Comprehensive project documentation covering requirements, build instructions, usage examples, model setup, language bindings, roadmap, and contribution guidelines for LTEngine.",
+      "tags": [
+        "documentation",
+        "entry-point",
+        "overview",
+        "getting-started"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:build-macos.sh",
+      "type": "file",
+      "name": "build-macos.sh",
+      "filePath": "build-macos.sh",
+      "summary": "macOS-specific build script that checks for Homebrew dependencies (cmake, libomp), sets OpenMP linker flags, and builds the LTEngine binary with Metal GPU acceleration support.",
+      "tags": [
+        "script",
+        "build-system",
+        "macos",
+        "metal",
+        "deployment"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Sets LDFLAGS, CPPFLAGS, and RUSTFLAGS to link against Homebrew-installed libomp for OpenMP support on Apple Silicon."
+    },
+    {
+      "id": "file:admin",
+      "type": "file",
+      "name": "admin",
+      "filePath": "admin",
+      "summary": "HTML markup for a Free Claude Code admin dashboard providing server control interface with provider configuration, model settings, and messaging views.",
+      "tags": [
+        "markup",
+        "admin-dashboard",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ltengine/build.rs",
+      "type": "file",
+      "name": "build.rs",
+      "filePath": "ltengine/build.rs",
+      "summary": "Rust build script that embeds static web resources into the compiled binary using the static-files crate.",
+      "tags": [
+        "build-script",
+        "static-resources",
+        "entry-point"
+      ],
+      "complexity": "simple",
+      "languageNotes": "Uses static_files::resource_dir to bundle the ./resources directory at compile time."
+    },
+    {
+      "id": "function:ltengine/build.rs:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "ltengine/build.rs",
+      "lineRange": [
+        3,
+        5
+      ],
+      "summary": "Build script entry point that invokes resource_dir to bundle static assets.",
+      "tags": [
+        "build-script",
+        "entry-point"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ltengine/resources/index.html",
+      "type": "file",
+      "name": "index.html",
+      "filePath": "ltengine/resources/index.html",
+      "summary": "Main web frontend HTML for the LTEngine translation UI, loading Vue.js, Materialize CSS, and the application JavaScript.",
+      "tags": [
+        "frontend",
+        "html",
+        "ui",
+        "entry-point"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ltengine/resources/static/app.js",
+      "type": "file",
+      "name": "app.js",
+      "filePath": "ltengine/resources/static/app.js",
+      "summary": "Vue.js frontend application implementing the translation web interface with language selection, text/file translation, API key management, and dark mode support.",
+      "tags": [
+        "frontend",
+        "vue",
+        "api-handler",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ltengine/resources/static/app.js:handleLangsResponse",
+      "type": "function",
+      "name": "handleLangsResponse",
+      "filePath": "ltengine/resources/static/app.js",
+      "lineRange": [
+        459,
+        499
+      ],
+      "summary": "Processes the languages API response, populating the language dropdowns and setting default source/target languages.",
+      "tags": [
+        "api-handler",
+        "language",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:ltengine/resources/static/app.js:handleNotification",
+      "type": "function",
+      "name": "handleNotification",
+      "filePath": "ltengine/resources/static/app.js",
+      "lineRange": [
+        505,
+        510
+      ],
+      "summary": "Displays a browser notification with the given title and body.",
+      "tags": [
+        "utility",
+        "notification",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/resources/static/app.js:updateSelectedAttribute",
+      "type": "function",
+      "name": "updateSelectedAttribute",
+      "filePath": "ltengine/resources/static/app.js",
+      "lineRange": [
+        516,
+        525
+      ],
+      "summary": "Updates the selected attribute on language dropdown options and adjusts dropdown width.",
+      "tags": [
+        "utility",
+        "ui",
+        "dom"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/resources/static/app.js:getTextWidth",
+      "type": "function",
+      "name": "getTextWidth",
+      "filePath": "ltengine/resources/static/app.js",
+      "lineRange": [
+        527,
+        533
+      ],
+      "summary": "Measures text width using an offscreen canvas for dropdown sizing.",
+      "tags": [
+        "utility",
+        "canvas",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/resources/static/app.js:setApiKey",
+      "type": "function",
+      "name": "setApiKey",
+      "filePath": "ltengine/resources/static/app.js",
+      "lineRange": [
+        535,
+        545
+      ],
+      "summary": "Prompts the user for an API key and stores it in localStorage for authenticated translation requests.",
+      "tags": [
+        "utility",
+        "authentication",
+        "local-storage"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/resources/static/app.js:getPreferredColorScheme",
+      "type": "function",
+      "name": "getPreferredColorScheme",
+      "filePath": "ltengine/resources/static/app.js",
+      "lineRange": [
+        548,
+        564
+      ],
+      "summary": "Detects the user's preferred color scheme (light/dark) from system preferences or localStorage.",
+      "tags": [
+        "utility",
+        "theme",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/resources/static/app.js:savePreferredColorScheme",
+      "type": "function",
+      "name": "savePreferredColorScheme",
+      "filePath": "ltengine/resources/static/app.js",
+      "lineRange": [
+        568,
+        581
+      ],
+      "summary": "Saves the user's color scheme preference to localStorage or removes it to follow system defaults.",
+      "tags": [
+        "utility",
+        "theme",
+        "local-storage"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/resources/static/app.js:toggleColorScheme",
+      "type": "function",
+      "name": "toggleColorScheme",
+      "filePath": "ltengine/resources/static/app.js",
+      "lineRange": [
+        584,
+        592
+      ],
+      "summary": "Toggles between light and dark color schemes and applies the change.",
+      "tags": [
+        "utility",
+        "theme",
+        "ui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/resources/static/app.js:applyPreferredColorScheme",
+      "type": "function",
+      "name": "applyPreferredColorScheme",
+      "filePath": "ltengine/resources/static/app.js",
+      "lineRange": [
+        595,
+        622
+      ],
+      "summary": "Applies the selected color scheme by manipulating CSS media rules for light/dark mode.",
+      "tags": [
+        "utility",
+        "theme",
+        "css"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ltengine/resources/static/css/main.css",
+      "type": "file",
+      "name": "main.css",
+      "filePath": "ltengine/resources/static/css/main.css",
+      "summary": "Primary stylesheet for the LTEngine web frontend, defining layout, components, and light/dark theme variables.",
+      "tags": [
+        "frontend",
+        "css",
+        "styling",
+        "theme"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ltengine/resources/static/css/material-icons.css",
+      "type": "file",
+      "name": "material-icons.css",
+      "filePath": "ltengine/resources/static/css/material-icons.css",
+      "summary": "Minimal CSS defining Material Icons font-face for the web UI iconography.",
+      "tags": [
+        "frontend",
+        "css",
+        "icons",
+        "font"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ltengine/resources/static/js/vue@2.js",
+      "type": "file",
+      "name": "vue@2.js",
+      "filePath": "ltengine/resources/static/js/vue@2.js",
+      "summary": "Minified Vue.js v2.6.14 runtime bundled as a self-contained vendor library for the frontend.",
+      "tags": [
+        "frontend",
+        "vue",
+        "vendor",
+        "framework"
+      ],
+      "complexity": "simple",
+      "languageNotes": "Self-contained minified Vue 2 runtime with no external dependencies."
+    },
+    {
+      "id": "file:scripts/warmup.sh",
+      "type": "file",
+      "name": "warmup.sh",
+      "filePath": "scripts/warmup.sh",
+      "summary": "Simple shell script that sends a test translation request to the local LTEngine API for warmup or health checking.",
+      "tags": [
+        "script",
+        "health-check",
+        "testing",
+        "api-client"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:ltengine/src/languages.rs:LangDetect",
+      "type": "class",
+      "name": "LangDetect",
+      "filePath": "ltengine/src/languages.rs",
+      "lineRange": [
+        117,
+        120
+      ],
+      "summary": "Result of language detection containing the detected language and confidence score.",
+      "tags": [
+        "data-model",
+        "language-detection",
+        "result"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/languages.rs:get_language_from_code",
+      "type": "function",
+      "name": "get_language_from_code",
+      "filePath": "ltengine/src/languages.rs",
+      "lineRange": [
+        111,
+        115
+      ],
+      "summary": "Looks up a Language by its ISO code using internal code mapping.",
+      "tags": [
+        "utility",
+        "lookup",
+        "language"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ltengine/src/main.rs",
+      "type": "file",
+      "name": "main.rs",
+      "filePath": "ltengine/src/main.rs",
+      "summary": "Application entry point and HTTP server setup using actix-web. Defines CLI args, API endpoints for translate/detect/languages, and server bootstrap.",
+      "tags": [
+        "entry-point",
+        "api-handler",
+        "actix-web",
+        "server"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:ltengine/src/main.rs:Args",
+      "type": "class",
+      "name": "Args",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        35,
+        95
+      ],
+      "summary": "CLI argument definitions for host, port, model path, API key, CPU mode, and optional remote LLM settings.",
+      "tags": [
+        "data-model",
+        "cli",
+        "configuration"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:ltengine/src/main.rs:TranslateRequest",
+      "type": "class",
+      "name": "TranslateRequest",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        98,
+        105
+      ],
+      "summary": "JSON/form request body for the translate endpoint containing text, source/target languages, format, and alternatives flag.",
+      "tags": [
+        "data-model",
+        "api",
+        "request"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:ltengine/src/main.rs:MPTranslateRequest",
+      "type": "class",
+      "name": "MPTranslateRequest",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        108,
+        115
+      ],
+      "summary": "Multipart form variant of TranslateRequest for file upload translation requests.",
+      "tags": [
+        "data-model",
+        "api",
+        "multipart"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/main.rs:into_translate_request",
+      "type": "function",
+      "name": "into_translate_request",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        117,
+        126
+      ],
+      "summary": "Converts an MPTranslateRequest into a standard TranslateRequest by unwrapping multipart fields.",
+      "tags": [
+        "utility",
+        "conversion",
+        "multipart"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/main.rs:parse_payload",
+      "type": "function",
+      "name": "parse_payload",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        129,
+        147
+      ],
+      "summary": "Parses incoming HTTP requests into TranslateRequest based on content-type (JSON, form, or multipart).",
+      "tags": [
+        "api-handler",
+        "parsing",
+        "request"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:ltengine/src/main.rs:check_params",
+      "type": "function",
+      "name": "check_params",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        149,
+        177
+      ],
+      "summary": "Validates translation request parameters including API key, required fields, and character limit.",
+      "tags": [
+        "validation",
+        "api-handler",
+        "security"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:ltengine/src/main.rs:improve_formatting",
+      "type": "function",
+      "name": "improve_formatting",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        179,
+        224
+      ],
+      "summary": "Post-processes LLM output to preserve original text casing, punctuation, and whitespace formatting.",
+      "tags": [
+        "utility",
+        "text-processing",
+        "post-processing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:ltengine/src/main.rs:detect",
+      "type": "function",
+      "name": "detect",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        227,
+        240
+      ],
+      "summary": "HTTP handler for the /detect endpoint that identifies the language of submitted text.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "language-detection"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/main.rs:check_format",
+      "type": "function",
+      "name": "check_format",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        242,
+        250
+      ],
+      "summary": "Validates that the requested translation format is either text or html.",
+      "tags": [
+        "validation",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/main.rs:translate",
+      "type": "function",
+      "name": "translate",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        253,
+        317
+      ],
+      "summary": "HTTP handler for the /translate endpoint. Builds prompts, runs LLM inference, and returns translated text with optional alternatives.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "translation",
+        "llm"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ltengine/src/main.rs:translate_file",
+      "type": "function",
+      "name": "translate_file",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        320,
+        325
+      ],
+      "summary": "HTTP handler for file-based translation (not yet implemented).",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "stub"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/main.rs:suggest",
+      "type": "function",
+      "name": "suggest",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        328,
+        333
+      ],
+      "summary": "HTTP handler for translation suggestions (not yet implemented).",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "stub"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/main.rs:get_languages",
+      "type": "function",
+      "name": "get_languages",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        336,
+        338
+      ],
+      "summary": "HTTP handler returning the list of supported languages for translation.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "language"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/main.rs:health",
+      "type": "function",
+      "name": "health",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        341,
+        343
+      ],
+      "summary": "HTTP health check endpoint returning 200 OK.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "health-check"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/main.rs:get_frontend_settings",
+      "type": "function",
+      "name": "get_frontend_settings",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        346,
+        366
+      ],
+      "summary": "HTTP handler returning frontend configuration including char limit and API key requirement.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "configuration"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/main.rs:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "ltengine/src/main.rs",
+      "lineRange": [
+        369,
+        439
+      ],
+      "summary": "Application entry point: parses CLI args, loads the model, initializes the LLM, and starts the actix-web HTTP server.",
+      "tags": [
+        "entry-point",
+        "server",
+        "bootstrap"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:ltengine/src/models.rs:HuggingFace",
+      "type": "class",
+      "name": "HuggingFace",
+      "filePath": "ltengine/src/models.rs",
+      "lineRange": [
+        7,
+        10
+      ],
+      "summary": "References a HuggingFace model repository and specific model file for remote download.",
+      "tags": [
+        "data-model",
+        "huggingface",
+        "remote"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:ltengine/src/models.rs:Model",
+      "type": "class",
+      "name": "Model",
+      "filePath": "ltengine/src/models.rs",
+      "lineRange": [
+        13,
+        20
+      ],
+      "summary": "Enum representing either a local file path or a remote HuggingFace model reference.",
+      "tags": [
+        "data-model",
+        "model-loading",
+        "enum"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:ltengine/src/prompt.rs:Prompt",
+      "type": "class",
+      "name": "Prompt",
+      "filePath": "ltengine/src/prompt.rs",
+      "lineRange": [
+        7,
+        10
+      ],
+      "summary": "Final structured prompt containing system instructions and user query text for the LLM.",
+      "tags": [
+        "data-model",
+        "prompt",
+        "llm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/prompt.rs:new",
+      "type": "function",
+      "name": "new",
+      "filePath": "ltengine/src/prompt.rs",
+      "lineRange": [
+        13,
+        19
+      ],
+      "summary": "Creates a new PromptBuilder with default text format.",
+      "tags": [
+        "constructor",
+        "builder",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/prompt.rs:set_format",
+      "type": "function",
+      "name": "set_format",
+      "filePath": "ltengine/src/prompt.rs",
+      "lineRange": [
+        21,
+        24
+      ],
+      "summary": "Sets the output format (text or html) on the prompt builder.",
+      "tags": [
+        "builder",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/prompt.rs:set_source_language",
+      "type": "function",
+      "name": "set_source_language",
+      "filePath": "ltengine/src/prompt.rs",
+      "lineRange": [
+        27,
+        30
+      ],
+      "summary": "Sets the source language for the translation prompt.",
+      "tags": [
+        "builder",
+        "utility",
+        "language"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/prompt.rs:set_target_language",
+      "type": "function",
+      "name": "set_target_language",
+      "filePath": "ltengine/src/prompt.rs",
+      "lineRange": [
+        32,
+        35
+      ],
+      "summary": "Sets the target language for the translation prompt.",
+      "tags": [
+        "builder",
+        "utility",
+        "language"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:ltengine/Cargo.toml",
+      "type": "config",
+      "name": "Cargo.toml",
+      "filePath": "ltengine/Cargo.toml",
+      "summary": "Rust package manifest defining the ltengine crate, its dependencies, features (local/api/cuda/metal/vulkan), and build dependencies.",
+      "tags": [
+        "configuration",
+        "rust",
+        "build-system",
+        "dependencies"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Uses Cargo features to toggle between local inference (llama-cpp-bindings) and remote API (reqwest) backends."
+    },
+    {
+      "id": "file:ltengine/src/llm_api.rs",
+      "type": "file",
+      "name": "llm_api.rs",
+      "filePath": "ltengine/src/llm_api.rs",
+      "summary": "Rust module providing an HTTP client for OpenAI-compatible LLM APIs, supporting model resolution and chat completion prompts.",
+      "tags": [
+        "api-handler",
+        "llm",
+        "http-client",
+        "service"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:ltengine/src/llm_api.rs:LLM",
+      "type": "class",
+      "name": "LLM",
+      "filePath": "ltengine/src/llm_api.rs",
+      "lineRange": [
+        5,
+        11
+      ],
+      "summary": "HTTP client struct for interacting with OpenAI-compatible LLM APIs, managing URL, API key, model, and request configuration.",
+      "tags": [
+        "service",
+        "llm",
+        "api-client",
+        "data-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:ltengine/src/llm_api.rs:ChatMessage",
+      "type": "class",
+      "name": "ChatMessage",
+      "filePath": "ltengine/src/llm_api.rs",
+      "lineRange": [
+        14,
+        17
+      ],
+      "summary": "Serializable struct representing a single message in a chat completion conversation.",
+      "tags": [
+        "data-model",
+        "serialization",
+        "llm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:ltengine/src/llm_api.rs:ChatCompletionRequest",
+      "type": "class",
+      "name": "ChatCompletionRequest",
+      "filePath": "ltengine/src/llm_api.rs",
+      "lineRange": [
+        20,
+        26
+      ],
+      "summary": "Serializable struct for the chat completion request payload sent to the LLM API.",
+      "tags": [
+        "data-model",
+        "serialization",
+        "llm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:ltengine/src/llm_api.rs:ChatCompletionResponse",
+      "type": "class",
+      "name": "ChatCompletionResponse",
+      "filePath": "ltengine/src/llm_api.rs",
+      "lineRange": [
+        29,
+        31
+      ],
+      "summary": "Deserializable struct for parsing the chat completion response from the LLM API.",
+      "tags": [
+        "data-model",
+        "deserialization",
+        "llm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:ltengine/src/llm_api.rs:Choice",
+      "type": "class",
+      "name": "Choice",
+      "filePath": "ltengine/src/llm_api.rs",
+      "lineRange": [
+        34,
+        36
+      ],
+      "summary": "Deserializable struct representing a single choice in a chat completion response.",
+      "tags": [
+        "data-model",
+        "deserialization",
+        "llm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:ltengine/src/llm_api.rs:ResponseMessage",
+      "type": "class",
+      "name": "ResponseMessage",
+      "filePath": "ltengine/src/llm_api.rs",
+      "lineRange": [
+        39,
+        41
+      ],
+      "summary": "Deserializable struct containing the content of a response message from the LLM.",
+      "tags": [
+        "data-model",
+        "deserialization",
+        "llm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:ltengine/src/llm_api.rs:ModelsResponse",
+      "type": "class",
+      "name": "ModelsResponse",
+      "filePath": "ltengine/src/llm_api.rs",
+      "lineRange": [
+        44,
+        46
+      ],
+      "summary": "Deserializable struct for parsing the /v1/models endpoint response.",
+      "tags": [
+        "data-model",
+        "deserialization",
+        "llm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:ltengine/src/llm_api.rs:ModelEntry",
+      "type": "class",
+      "name": "ModelEntry",
+      "filePath": "ltengine/src/llm_api.rs",
+      "lineRange": [
+        49,
+        51
+      ],
+      "summary": "Deserializable struct representing a single model entry in the models list.",
+      "tags": [
+        "data-model",
+        "deserialization",
+        "llm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/llm_api.rs:new",
+      "type": "function",
+      "name": "new",
+      "filePath": "ltengine/src/llm_api.rs",
+      "lineRange": [
+        54,
+        60
+      ],
+      "summary": "Constructs a new LLM client with configurable URL, API key, model, max tokens, and request timeout.",
+      "tags": [
+        "constructor",
+        "factory",
+        "llm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:ltengine/src/llm_api.rs:resolve_model",
+      "type": "function",
+      "name": "resolve_model",
+      "filePath": "ltengine/src/llm_api.rs",
+      "lineRange": [
+        62,
+        89
+      ],
+      "summary": "Fetches available models from the LLM API and auto-selects the first available model.",
+      "tags": [
+        "api-handler",
+        "llm",
+        "model-resolution"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:ltengine/src/llm_api.rs:run_prompt",
+      "type": "function",
+      "name": "run_prompt",
+      "filePath": "ltengine/src/llm_api.rs",
+      "lineRange": [
+        91,
+        127
+      ],
+      "summary": "Sends a chat completion request with system and user messages, returning the generated response text.",
+      "tags": [
+        "api-handler",
+        "llm",
+        "chat-completion"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:ltengine/src/banner.rs",
+      "target": "function:ltengine/src/banner.rs:print_banner",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/banner.rs",
+      "target": "function:ltengine/src/banner.rs:print_banner",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/error_response.rs",
+      "target": "class:ltengine/src/error_response.rs:ErrorResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/error_response.rs",
+      "target": "class:ltengine/src/error_response.rs:ErrorResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/languages.rs",
+      "target": "class:ltengine/src/languages.rs:Language",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/languages.rs",
+      "target": "function:ltengine/src/languages.rs:detect_lang",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/languages.rs",
+      "target": "class:ltengine/src/languages.rs:Language",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/languages.rs",
+      "target": "function:ltengine/src/languages.rs:detect_lang",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/llm.rs",
+      "target": "class:ltengine/src/llm.rs:LLM",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm.rs",
+      "target": "class:ltengine/src/llm.rs:LLMContext",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm.rs",
+      "target": "function:ltengine/src/llm.rs:new",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm.rs",
+      "target": "function:ltengine/src/llm.rs:create_context",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm.rs",
+      "target": "function:ltengine/src/llm.rs:run_prompt",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm.rs",
+      "target": "function:ltengine/src/llm.rs:process",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm.rs",
+      "target": "class:ltengine/src/llm.rs:LLM",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/llm.rs",
+      "target": "class:ltengine/src/llm.rs:LLMContext",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/llm.rs",
+      "target": "function:ltengine/src/llm.rs:new",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/llm.rs",
+      "target": "function:ltengine/src/llm.rs:create_context",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/llm.rs",
+      "target": "function:ltengine/src/llm.rs:run_prompt",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/llm.rs",
+      "target": "function:ltengine/src/llm.rs:process",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/models.rs",
+      "target": "function:ltengine/src/models.rs:load",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/models.rs",
+      "target": "function:ltengine/src/models.rs:load_model",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/models.rs",
+      "target": "function:ltengine/src/models.rs:load",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/models.rs",
+      "target": "function:ltengine/src/models.rs:load_model",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/prompt.rs",
+      "target": "class:ltengine/src/prompt.rs:PromptBuilder",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/prompt.rs",
+      "target": "function:ltengine/src/prompt.rs:build",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/prompt.rs",
+      "target": "class:ltengine/src/prompt.rs:PromptBuilder",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/prompt.rs",
+      "target": "function:ltengine/src/prompt.rs:build",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "config:Cargo.toml",
+      "target": "file:build-macos.sh",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "document:README.md",
+      "target": "config:Cargo.toml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:README.md",
+      "target": "file:build-macos.sh",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:build-macos.sh",
+      "target": "config:Cargo.toml",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:ltengine/build.rs",
+      "target": "function:ltengine/build.rs:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/resources/static/app.js",
+      "target": "function:ltengine/resources/static/app.js:handleLangsResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/resources/static/app.js",
+      "target": "function:ltengine/resources/static/app.js:handleNotification",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/resources/static/app.js",
+      "target": "function:ltengine/resources/static/app.js:updateSelectedAttribute",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/resources/static/app.js",
+      "target": "function:ltengine/resources/static/app.js:getTextWidth",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/resources/static/app.js",
+      "target": "function:ltengine/resources/static/app.js:setApiKey",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/resources/static/app.js",
+      "target": "function:ltengine/resources/static/app.js:getPreferredColorScheme",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/resources/static/app.js",
+      "target": "function:ltengine/resources/static/app.js:savePreferredColorScheme",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/resources/static/app.js",
+      "target": "function:ltengine/resources/static/app.js:toggleColorScheme",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/resources/static/app.js",
+      "target": "function:ltengine/resources/static/app.js:applyPreferredColorScheme",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/resources/index.html",
+      "target": "file:ltengine/resources/static/app.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:ltengine/resources/index.html",
+      "target": "file:ltengine/resources/static/js/vue@2.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:ltengine/resources/index.html",
+      "target": "file:ltengine/resources/static/css/main.css",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:ltengine/resources/index.html",
+      "target": "file:ltengine/resources/static/css/material-icons.css",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:ltengine/resources/static/app.js",
+      "target": "file:ltengine/resources/static/js/vue@2.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:ltengine/resources/static/css/main.css",
+      "target": "file:ltengine/resources/static/css/material-icons.css",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:ltengine/build.rs",
+      "target": "file:ltengine/resources/index.html",
+      "type": "deploys",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:ltengine/build.rs",
+      "target": "file:ltengine/resources/static/app.js",
+      "type": "deploys",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:ltengine/build.rs",
+      "target": "file:ltengine/resources/static/css/main.css",
+      "type": "deploys",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:ltengine/build.rs",
+      "target": "file:ltengine/resources/static/css/material-icons.css",
+      "type": "deploys",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:ltengine/build.rs",
+      "target": "file:ltengine/resources/static/js/vue@2.js",
+      "type": "deploys",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:ltengine/src/languages.rs",
+      "target": "class:ltengine/src/languages.rs:LangDetect",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/languages.rs",
+      "target": "function:ltengine/src/languages.rs:get_language_from_code",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/languages.rs",
+      "target": "class:ltengine/src/languages.rs:LangDetect",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/languages.rs",
+      "target": "function:ltengine/src/languages.rs:get_language_from_code",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "class:ltengine/src/main.rs:Args",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "class:ltengine/src/main.rs:TranslateRequest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "class:ltengine/src/main.rs:MPTranslateRequest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "function:ltengine/src/main.rs:into_translate_request",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "function:ltengine/src/main.rs:parse_payload",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "function:ltengine/src/main.rs:check_params",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "function:ltengine/src/main.rs:improve_formatting",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "function:ltengine/src/main.rs:detect",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "function:ltengine/src/main.rs:check_format",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "function:ltengine/src/main.rs:translate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "function:ltengine/src/main.rs:translate_file",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "function:ltengine/src/main.rs:suggest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "function:ltengine/src/main.rs:get_languages",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "function:ltengine/src/main.rs:health",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "function:ltengine/src/main.rs:get_frontend_settings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "function:ltengine/src/main.rs:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "file:ltengine/src/banner.rs",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "file:ltengine/src/error_response.rs",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "file:ltengine/src/languages.rs",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "file:ltengine/src/llm.rs",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "file:ltengine/src/models.rs",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "file:ltengine/src/prompt.rs",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:ltengine/src/models.rs",
+      "target": "class:ltengine/src/models.rs:HuggingFace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/models.rs",
+      "target": "class:ltengine/src/models.rs:Model",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/models.rs",
+      "target": "class:ltengine/src/models.rs:HuggingFace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/models.rs",
+      "target": "class:ltengine/src/models.rs:Model",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/prompt.rs",
+      "target": "class:ltengine/src/prompt.rs:Prompt",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/prompt.rs",
+      "target": "function:ltengine/src/prompt.rs:new",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/prompt.rs",
+      "target": "function:ltengine/src/prompt.rs:set_format",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/prompt.rs",
+      "target": "function:ltengine/src/prompt.rs:set_source_language",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/prompt.rs",
+      "target": "function:ltengine/src/prompt.rs:set_target_language",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/prompt.rs",
+      "target": "class:ltengine/src/prompt.rs:Prompt",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/main.rs:main",
+      "target": "function:ltengine/src/banner.rs:print_banner",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/main.rs:main",
+      "target": "function:ltengine/src/models.rs:load_model",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/main.rs:main",
+      "target": "function:ltengine/src/llm.rs:new",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/main.rs:detect",
+      "target": "function:ltengine/src/languages.rs:detect_lang",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/main.rs:translate",
+      "target": "function:ltengine/src/languages.rs:get_language_from_code",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/main.rs:translate",
+      "target": "function:ltengine/src/languages.rs:detect_lang",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/main.rs:translate",
+      "target": "function:ltengine/src/llm.rs:run_prompt",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/main.rs:detect",
+      "target": "function:ltengine/src/main.rs:parse_payload",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/main.rs:detect",
+      "target": "function:ltengine/src/main.rs:check_params",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/main.rs:translate",
+      "target": "function:ltengine/src/main.rs:parse_payload",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/main.rs:translate",
+      "target": "function:ltengine/src/main.rs:check_params",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/main.rs:translate",
+      "target": "function:ltengine/src/main.rs:check_format",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/main.rs:translate",
+      "target": "function:ltengine/src/main.rs:improve_formatting",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "file:ltengine/src/llm.rs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "file:ltengine/src/prompt.rs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:ltengine/src/main.rs",
+      "target": "file:ltengine/src/languages.rs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:ltengine/src/llm.rs",
+      "target": "file:ltengine/src/prompt.rs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:ltengine/build.rs",
+      "target": "file:ltengine/resources/index.html",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:ltengine/Cargo.toml",
+      "target": "file:ltengine/build.rs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:ltengine/Cargo.toml",
+      "target": "file:ltengine/src/llm_api.rs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:ltengine/src/llm_api.rs",
+      "target": "class:ltengine/src/llm_api.rs:LLM",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm_api.rs",
+      "target": "class:ltengine/src/llm_api.rs:ChatMessage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm_api.rs",
+      "target": "class:ltengine/src/llm_api.rs:ChatCompletionRequest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm_api.rs",
+      "target": "class:ltengine/src/llm_api.rs:ChatCompletionResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm_api.rs",
+      "target": "class:ltengine/src/llm_api.rs:Choice",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm_api.rs",
+      "target": "class:ltengine/src/llm_api.rs:ResponseMessage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm_api.rs",
+      "target": "class:ltengine/src/llm_api.rs:ModelsResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm_api.rs",
+      "target": "class:ltengine/src/llm_api.rs:ModelEntry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm_api.rs",
+      "target": "function:ltengine/src/llm_api.rs:new",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm_api.rs",
+      "target": "function:ltengine/src/llm_api.rs:resolve_model",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm_api.rs",
+      "target": "function:ltengine/src/llm_api.rs:run_prompt",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ltengine/src/llm_api.rs",
+      "target": "class:ltengine/src/llm_api.rs:LLM",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/llm_api.rs",
+      "target": "function:ltengine/src/llm_api.rs:new",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/llm_api.rs",
+      "target": "function:ltengine/src/llm_api.rs:resolve_model",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ltengine/src/llm_api.rs",
+      "target": "function:ltengine/src/llm_api.rs:run_prompt",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:ltengine/src/llm_api.rs:LLM",
+      "target": "function:ltengine/src/llm_api.rs:new",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "class:ltengine/src/llm_api.rs:LLM",
+      "target": "function:ltengine/src/llm_api.rs:resolve_model",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "class:ltengine/src/llm_api.rs:LLM",
+      "target": "function:ltengine/src/llm_api.rs:run_prompt",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "function:ltengine/src/llm_api.rs:new",
+      "target": "class:ltengine/src/llm_api.rs:LLM",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/llm_api.rs:resolve_model",
+      "target": "class:ltengine/src/llm_api.rs:ModelsResponse",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/llm_api.rs:resolve_model",
+      "target": "class:ltengine/src/llm_api.rs:ModelEntry",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/llm_api.rs:run_prompt",
+      "target": "class:ltengine/src/llm_api.rs:ChatCompletionRequest",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/llm_api.rs:run_prompt",
+      "target": "class:ltengine/src/llm_api.rs:ChatMessage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/llm_api.rs:run_prompt",
+      "target": "class:ltengine/src/llm_api.rs:ChatCompletionResponse",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/llm_api.rs:run_prompt",
+      "target": "class:ltengine/src/llm_api.rs:Choice",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:ltengine/src/llm_api.rs:run_prompt",
+      "target": "class:ltengine/src/llm_api.rs:ResponseMessage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer:api",
+      "name": "API Layer",
+      "description": "HTTP server entry point and Actix-web API handlers defining LibreTranslate-compatible endpoints, request DTOs, CLI arguments, and error responses",
+      "nodeIds": [
+        "file:ltengine/src/main.rs",
+        "file:ltengine/src/error_response.rs"
+      ]
+    },
+    {
+      "id": "layer:service",
+      "name": "Service Layer",
+      "description": "Core translation business logic including LLM inference via llama.cpp bindings, OpenAI-compatible API wrapper, prompt engineering, language detection, model loading, and startup utilities",
+      "nodeIds": [
+        "file:ltengine/src/llm.rs",
+        "file:ltengine/src/llm_api.rs",
+        "file:ltengine/src/prompt.rs",
+        "file:ltengine/src/languages.rs",
+        "file:ltengine/src/models.rs",
+        "file:ltengine/src/banner.rs"
+      ]
+    },
+    {
+      "id": "layer:frontend",
+      "name": "Frontend Layer",
+      "description": "Vue.js 2 web translation interface with HTML markup, JavaScript application logic, CSS theming, and an admin dashboard",
+      "nodeIds": [
+        "file:ltengine/resources/index.html",
+        "file:ltengine/resources/static/app.js",
+        "file:ltengine/resources/static/css/main.css",
+        "file:ltengine/resources/static/css/material-icons.css",
+        "file:ltengine/resources/static/js/vue@2.js",
+        "file:admin"
+      ]
+    },
+    {
+      "id": "layer:infrastructure",
+      "name": "Infrastructure Layer",
+      "description": "CI/CD pipeline, Rust build scripts embedding static resources, platform-specific build automation, and service warmup scripts",
+      "nodeIds": [
+        "pipeline:.github/workflows/build.yml",
+        "file:ltengine/build.rs",
+        "file:build-macos.sh",
+        "file:scripts/warmup.sh"
+      ]
+    },
+    {
+      "id": "layer:config",
+      "name": "Configuration Layer",
+      "description": "Rust workspace and crate manifests defining dependencies, features, lint rules, and tool-specific ignore patterns",
+      "nodeIds": [
+        "config:Cargo.toml",
+        "config:ltengine/Cargo.toml"
+      ]
+    },
+    {
+      "id": "layer:documentation",
+      "name": "Documentation Layer",
+      "description": "Project README covering build instructions, usage examples, model setup, and contribution guidelines",
+      "nodeIds": [
+        "document:README.md"
+      ]
+    }
+  ],
+  "tour": [
+    {
+      "order": 1,
+      "title": "Project Overview",
+      "description": "Start with the README to understand what LTEngine is: a free, open-source, self-hosted machine translation API powered by local LLMs via llama.cpp. It is fully compatible with the LibreTranslate API, meaning any client or binding that works with LibreTranslate also works with LTEngine. The README covers build requirements, supported accelerators (CUDA, Metal, Vulkan), available models, usage examples, and the project roadmap.",
+      "nodeIds": [
+        "document:README.md"
+      ]
+    },
+    {
+      "order": 2,
+      "title": "Application Entry Point",
+      "description": "The main.rs file is the heart of the application. It sets up the Actix-web HTTP server, defines CLI arguments for model selection and server configuration, declares request/response DTOs, and registers all API endpoints including /translate, /languages, and /detect. This is where the LibreTranslate-compatible REST API comes to life.",
+      "nodeIds": [
+        "file:ltengine/src/main.rs"
+      ],
+      "languageLesson": "Rust's async runtime (powered by Tokio via Actix-web) allows the server to handle concurrent HTTP requests. The main function typically uses #[actix_web::main] to enter the async runtime, then binds routes to handler functions using App::new().service()."
+    },
+    {
+      "order": 3,
+      "title": "API Error Responses",
+      "description": "Before diving into business logic, understand how errors are communicated. The error_response module defines a custom Actix-web error type that standardizes error formatting across all endpoints. This ensures clients receive consistent JSON error bodies regardless of which handler fails.",
+      "nodeIds": [
+        "file:ltengine/src/error_response.rs"
+      ],
+      "languageLesson": "In Rust, custom error types typically implement the ResponseError trait from actix-web. This trait defines how the error is converted into an HTTP response, including status code and body format, enabling ergonomic use of the ? operator in handler functions."
+    },
+    {
+      "order": 4,
+      "title": "Model Loading",
+      "description": "The models module defines how LLM weights are sourced. It supports loading from a local file path or downloading from HuggingFace remotely. This abstraction lets users either bring their own .gguf model or let LTEngine fetch one of the pre-configured Gemma3 variants automatically.",
+      "nodeIds": [
+        "file:ltengine/src/models.rs"
+      ],
+      "languageLesson": "Rust enums with associated data are ideal for modeling mutually exclusive choices like ModelSource::Local(PathBuf) versus ModelSource::Remote(String). Pattern matching on these variants at the call site makes all branches explicit and compiler-checked."
+    },
+    {
+      "order": 5,
+      "title": "LLM Inference Engine",
+      "description": "The llm module wraps the llama.cpp bindings to load the GGUF model into memory and run inference. This is the engine room: it takes a structured prompt, feeds it to the loaded LLM, and streams back generated tokens that form the translated output. GPU acceleration (CUDA, Metal, Vulkan) is handled at this layer.",
+      "nodeIds": [
+        "file:ltengine/src/llm.rs"
+      ],
+      "languageLesson": "Rust's ownership model is critical when wrapping C++ libraries like llama.cpp via FFI. The LlamaContext and other native handles must be managed carefully, often wrapped in structs that implement Drop to ensure native resources are freed deterministically when they go out of scope."
+    },
+    {
+      "order": 6,
+      "title": "OpenAI-Compatible API Wrapper",
+      "description": "The llm_api module provides an OpenAI-compatible API wrapper around the core LLM inference engine. It defines request/response types matching the OpenAI chat completions format, enabling integration with existing OpenAI client libraries and tools.",
+      "nodeIds": [
+        "file:ltengine/src/llm_api.rs"
+      ],
+      "languageLesson": "Rust structs with serde derive macros enable seamless JSON serialization/deserialization. The #[derive(Serialize, Deserialize)] attributes automatically implement the traits needed for JSON API request/response handling, making it easy to build compatible APIs."
+    },
+    {
+      "order": 7,
+      "title": "Prompt Engineering",
+      "description": "Translation quality depends heavily on how the prompt is structured. The prompt module builds formatted prompts for the LLM, supporting both plain text and HTML input formats. It injects source and target language codes into a template that instructs the model to act as a professional translator.",
+      "nodeIds": [
+        "file:ltengine/src/prompt.rs"
+      ],
+      "languageLesson": "Rust's builder pattern, implemented via a PromptBuilder struct with chainable methods, provides a fluent API for constructing complex prompts. Each method returns self, allowing calls like PromptBuilder::new().source('en').target('es').text('Hello').build()."
+    },
+    {
+      "order": 8,
+      "title": "Language Detection",
+      "description": "When the source language is set to auto, the languages module steps in. It defines the supported language list and uses the lingua library to detect the input language with confidence scoring. This enables the auto-detection feature shown in the README example where Ciao! is identified as Italian.",
+      "nodeIds": [
+        "file:ltengine/src/languages.rs"
+      ],
+      "languageLesson": "The lingua crate provides statistical language detection without requiring external model downloads at runtime. It works by analyzing character n-gram frequencies, making it lightweight compared to neural detection approaches while still achieving high accuracy for longer texts."
+    },
+    {
+      "order": 9,
+      "title": "Frontend Web Interface",
+      "description": "LTEngine ships with a built-in web UI for interactive translation. The frontend is a Vue.js 2 single-page application served from static files. The HTML page bootstraps the Vue app, which handles language selection, text input, file translation, dark mode toggling, and API documentation examples directly in the browser.",
+      "nodeIds": [
+        "file:ltengine/resources/index.html",
+        "file:ltengine/resources/static/app.js"
+      ],
+      "languageLesson": "Vue.js 2 uses a reactive data model where changes to the data object automatically update the DOM. The app.js file likely defines a new Vue({ el: \"#app\", data: { ... } }) instance with methods for calling the /translate endpoint via fetch() and updating the UI reactively."
+    },
+    {
+      "order": 10,
+      "title": "Static Asset Embedding",
+      "description": "The build.rs script is a Rust build script that runs at compile time. It uses the static-files crate to embed all frontend assets, including HTML, JavaScript, CSS, and fonts, directly into the compiled binary. This means the ltegine executable is self-contained and serves its own web UI without external file dependencies.",
+      "nodeIds": [
+        "file:ltengine/build.rs"
+      ],
+      "languageLesson": "Rust build scripts (build.rs) run before the main compilation and can generate code or embed resources. The include_str! and include_bytes! macros compile file contents into the binary at build time, while crates like static-files automate this for entire directories."
+    },
+    {
+      "order": 11,
+      "title": "Build Configuration and CI",
+      "description": "The Cargo.toml manifests define the Rust workspace, crate dependencies, and optional GPU features (cuda, metal, vulkan). The root workspace coordinates shared dependencies, while the ltengine crate manifest pins actix-web, llama-cpp-bindings, and serde. The GitHub Actions workflow automates release builds and artifact uploads on every push.",
+      "nodeIds": [
+        "config:Cargo.toml",
+        "config:ltengine/Cargo.toml",
+        "pipeline:.github/workflows/build.yml"
+      ],
+      "languageLesson": "Rust workspaces allow multiple crates to share a single Cargo.lock and target directory. Optional features in Cargo.toml (like cuda = [\"llama-cpp-bindings/cuda\"]) enable conditional compilation, letting users build with only the GPU backends they need, reducing compile time and binary size."
+    }
+  ],
+  "version": "1.0.0",
+  "project": {
+    "name": "ltengine",
+    "languages": [
+      "css",
+      "html",
+      "javascript",
+      "markdown",
+      "rust",
+      "shell",
+      "toml",
+      "yaml"
+    ],
+    "frameworks": [
+      "actix-web",
+      "Vue",
+      "GitHub Actions"
+    ],
+    "description": "Free and Open Source Local AI Machine Translation API, written in Rust, entirely self-hosted and compatible with LibreTranslate.",
+    "analyzedAt": "2026-06-05T04:14:52.886Z",
+    "gitCommitHash": "2b7e0aaaec39a4ae5c39fa34631e16757949b5e0"
+  }
+}

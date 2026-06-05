@@ -1,0 +1,254 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "LTEngine",
+    "languages": ["Rust", "JavaScript"],
+    "frameworks": ["actix-web", "llama.cpp (llama-cpp-bindings)", "Vue 2", "clap", "serde", "whatlang", "hf-hub"],
+    "description": "A free, open-source, self-hosted Local AI Machine Translation API written in Rust. It exposes a LibreTranslate-compatible REST API whose translations are produced by large language models (Gemma3 GGUF) running locally via llama.cpp, with automatic source-language detection and a bundled web UI.",
+    "analyzedAt": "2026-06-05T00:00:00Z",
+    "gitCommitHash": "a4ebe4bb393cca42c0a49c475194cd9f4db577c0"
+  },
+  "nodes": [
+    {
+      "id": "domain:translation-api",
+      "type": "domain",
+      "name": "Translation API",
+      "summary": "The LibreTranslate-compatible HTTP API that accepts translation and language-detection requests, validates them, and returns translated text. It is the primary product surface, parsing JSON/form/multipart payloads and orchestrating language detection, prompt building, and LLM inference.",
+      "tags": ["api", "http", "actix-web", "translation", "rest"],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": ["TranslateRequest", "MPTranslateRequest", "ErrorResponse", "Args"],
+        "businessRules": [
+          "Requests exceeding the configured char_limit (default 5000) are rejected with 400",
+          "If an API key is configured, requests must supply a matching api_key or receive 403",
+          "Only 'text' and 'html' formats are accepted",
+          "When source == target the input is echoed back without invoking the LLM",
+          "Output punctuation and casing are normalized to match the input via improve_formatting"
+        ],
+        "crossDomainInteractions": [
+          "Delegates source-language detection to Language Services",
+          "Invokes LLM Translation to generate translated text",
+          "Reports the language catalog from Language Services via /languages"
+        ]
+      }
+    },
+    {
+      "id": "domain:language-services",
+      "type": "domain",
+      "name": "Language Services",
+      "summary": "Maintains the catalog of ~48 supported languages with their codes, display names, and translation targets, and performs automatic source-language detection. Detection is constrained to the supported allowlist using the whatlang library.",
+      "tags": ["languages", "detection", "whatlang", "i18n", "catalog"],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entities": ["Language", "LangDetect", "LANGUAGES catalog"],
+        "businessRules": [
+          "Detection is restricted to the allowlist of supported languages",
+          "External-facing codes (e.g. zh-Hans, pt-BR) are mapped to internal codes",
+          "Confidence is reported as an integer percentage (0-100)",
+          "If detection fails the first catalog entry (English) is returned with confidence 0"
+        ],
+        "crossDomainInteractions": [
+          "Supplies detected language and confidence to the /detect and /translate endpoints",
+          "Resolves source/target language display names used by Prompt building in LLM Translation"
+        ]
+      }
+    },
+    {
+      "id": "domain:llm-translation",
+      "type": "domain",
+      "name": "LLM Translation Generation",
+      "summary": "Builds the system/user prompt for the translation task and runs it through a locally hosted Gemma3 model via llama.cpp. Handles tokenization, context creation, batched decoding, and sampling to produce the translated string, serializing inference behind a mutex.",
+      "tags": ["llm", "llama-cpp", "inference", "prompt", "gemma3"],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": ["LLM", "LLMContext", "PromptBuilder", "Prompt", "LlamaSampler"],
+        "businessRules": [
+          "System prompt instructs the model to return only the translation with no explanation",
+          "HTML format prompt additionally requires preserving all HTML tags",
+          "Context size is allocated as 3x the prompt token count",
+          "Inference is serialized via a prompt_lock mutex because the bindings are not thread-safe",
+          "GPU layers are offloaded when CUDA/Vulkan features are enabled and --cpu is not set"
+        ],
+        "crossDomainInteractions": [
+          "Consumes resolved language names from Language Services to build prompts",
+          "Returns generated text to the Translation API",
+          "Requires a loaded model from Model Management at startup"
+        ]
+      }
+    },
+    {
+      "id": "domain:model-management",
+      "type": "domain",
+      "name": "Model Management",
+      "summary": "Resolves which GGUF model to use and makes it available on disk, either by validating a user-supplied local .gguf file or by downloading a registered Gemma3 model from HuggingFace. Runs once during server startup before the LLM is initialized.",
+      "tags": ["models", "huggingface", "gguf", "startup", "download"],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entities": ["Model", "HuggingFace", "MODELS registry"],
+        "businessRules": [
+          "A local model path must exist and have a .gguf extension or loading fails",
+          "Remote models are resolved from the gemma3 registry (1b/4b/12b/27b) and downloaded from HuggingFace",
+          "A non-empty --model-file overrides the registry selection and forces local loading",
+          "Failure to load the model terminates the process at startup"
+        ],
+        "crossDomainInteractions": [
+          "Provides the resolved model path to LLM Translation at startup",
+          "Triggered by the server bootstrap in the Translation API process"
+        ]
+      }
+    },
+    {
+      "id": "domain:web-ui",
+      "type": "domain",
+      "name": "Web Translation UI",
+      "summary": "The bundled Vue 2 single-page frontend that lets users type text, pick source/target languages, and see live translations. It loads frontend settings and the language list on startup and debounces translation requests to the API.",
+      "tags": ["frontend", "vue", "ui", "spa", "translation"],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entities": ["Vue app state", "langs", "settings", "inputText/translatedText"],
+        "businessRules": [
+          "Translation requests are debounced by frontendTimeout before being sent",
+          "HTML format is auto-selected when the input matches an HTML tag regex",
+          "Detected language and confidence are displayed when source is 'auto'",
+          "Source/target/query are persisted to URL query params for shareable links",
+          "File translation and suggestions are present in the UI but disabled by backend settings"
+        ],
+        "crossDomainInteractions": [
+          "Calls the Translation API endpoints /frontend/settings, /languages and /translate",
+          "Served as static resources by the Translation API server"
+        ]
+      }
+    },
+
+    { "id": "flow:translate-text", "type": "flow", "name": "Translate Text", "summary": "Handles a translation request end to end: parses the payload, validates parameters, resolves languages, builds the prompt, runs LLM inference, and returns formatted translated text.", "tags": ["translation", "endpoint", "core"], "complexity": "complex", "domainMeta": { "entryPoint": "POST /translate", "entryType": "http" } },
+    { "id": "flow:detect-language", "type": "flow", "name": "Detect Language", "summary": "Detects the language of submitted text and returns the language code with a confidence score.", "tags": ["detection", "endpoint"], "complexity": "simple", "domainMeta": { "entryPoint": "POST /detect", "entryType": "http" } },
+    { "id": "flow:list-languages", "type": "flow", "name": "List Supported Languages", "summary": "Returns the full catalog of supported languages with codes, names, and valid translation targets.", "tags": ["languages", "endpoint", "catalog"], "complexity": "simple", "domainMeta": { "entryPoint": "GET /languages", "entryType": "http" } },
+    { "id": "flow:frontend-settings", "type": "flow", "name": "Serve Frontend Settings", "summary": "Returns UI configuration (char limit, default languages, feature flags) consumed by the web frontend at startup.", "tags": ["settings", "endpoint", "frontend"], "complexity": "simple", "domainMeta": { "entryPoint": "GET /frontend/settings", "entryType": "http" } },
+    { "id": "flow:server-bootstrap", "type": "flow", "name": "Server Bootstrap", "summary": "Application startup: parses CLI args, loads the model, initializes the LLM, registers HTTP routes and static files, then binds and runs the actix-web server.", "tags": ["startup", "bootstrap", "server"], "complexity": "moderate", "domainMeta": { "entryPoint": "main()", "entryType": "cli" } },
+    { "id": "flow:auto-detect-source", "type": "flow", "name": "Auto-Detect Source Language", "summary": "Detects the source language of input text using whatlang constrained to the supported allowlist, returning the matched Language and confidence.", "tags": ["detection", "whatlang"], "complexity": "moderate", "domainMeta": { "entryPoint": "detect_lang()", "entryType": "manual" } },
+    { "id": "flow:generate-translation", "type": "flow", "name": "Generate Translation via LLM", "summary": "Runs the translation prompt through the local Gemma3 model: applies the chat template, tokenizes, creates a context, then decodes and samples tokens until end-of-generation.", "tags": ["llm", "inference", "llama-cpp"], "complexity": "complex", "domainMeta": { "entryPoint": "LLM::run_prompt()", "entryType": "manual" } },
+    { "id": "flow:resolve-and-load-model", "type": "flow", "name": "Resolve and Load Model", "summary": "Determines whether to use a local .gguf file or a registered HuggingFace model, validates or downloads it, and returns the on-disk path.", "tags": ["models", "huggingface", "startup"], "complexity": "moderate", "domainMeta": { "entryPoint": "load_model()", "entryType": "manual" } },
+    { "id": "flow:ui-translate", "type": "flow", "name": "UI Live Translate", "summary": "Frontend flow that captures user input, debounces it, posts to /translate, renders the result, and shows the detected language when source is auto.", "tags": ["frontend", "translation", "vue"], "complexity": "moderate", "domainMeta": { "entryPoint": "handleInput()", "entryType": "manual" } },
+    { "id": "flow:ui-bootstrap", "type": "flow", "name": "UI Bootstrap", "summary": "Frontend initialization that loads /frontend/settings and /languages, then applies source/target/query URL parameters to prefill the UI.", "tags": ["frontend", "startup", "vue"], "complexity": "simple", "domainMeta": { "entryPoint": "Vue mounted()", "entryType": "manual" } },
+
+    { "id": "step:translate-text:parse-payload", "type": "step", "name": "Parse Payload", "summary": "Parses the request body as JSON, urlencoded form, or multipart into a TranslateRequest based on content-type.", "tags": ["parsing", "http"], "complexity": "moderate", "filePath": "ltengine/src/main.rs", "lineRange": [94, 112] },
+    { "id": "step:translate-text:validate-params", "type": "step", "name": "Validate Parameters", "summary": "Ensures q, source and target are present, enforces the API key, and rejects text over the char limit.", "tags": ["validation", "auth"], "complexity": "moderate", "filePath": "ltengine/src/main.rs", "lineRange": [114, 142] },
+    { "id": "step:translate-text:check-format", "type": "step", "name": "Check Format", "summary": "Validates that the requested format is 'text' or 'html'.", "tags": ["validation"], "complexity": "simple", "filePath": "ltengine/src/main.rs", "lineRange": [207, 215] },
+    { "id": "step:translate-text:resolve-languages", "type": "step", "name": "Resolve Languages", "summary": "Resolves source and target language codes to display names (or 'auto'), erroring on unsupported codes.", "tags": ["languages"], "complexity": "moderate", "filePath": "ltengine/src/main.rs", "lineRange": [237, 251] },
+    { "id": "step:translate-text:build-prompt", "type": "step", "name": "Build Prompt", "summary": "Uses PromptBuilder to construct the system/user prompt for the resolved languages and format.", "tags": ["prompt"], "complexity": "simple", "filePath": "ltengine/src/main.rs", "lineRange": [232, 254] },
+    { "id": "step:translate-text:run-inference", "type": "step", "name": "Run Inference", "summary": "Calls LLM.run_prompt to generate the translation, echoing input when source equals target.", "tags": ["llm", "inference"], "complexity": "moderate", "filePath": "ltengine/src/main.rs", "lineRange": [253, 260] },
+    { "id": "step:translate-text:improve-formatting", "type": "step", "name": "Improve Formatting", "summary": "Normalizes trailing punctuation and casing of the translation to match the input text.", "tags": ["post-processing", "formatting"], "complexity": "moderate", "filePath": "ltengine/src/main.rs", "lineRange": [144, 189] },
+    { "id": "step:translate-text:attach-detected-language", "type": "step", "name": "Attach Detected Language", "summary": "When source is 'auto', detects the input language and adds detectedLanguage to the response.", "tags": ["detection"], "complexity": "simple", "filePath": "ltengine/src/main.rs", "lineRange": [270, 276] },
+    { "id": "step:translate-text:respond", "type": "step", "name": "Respond", "summary": "Returns the JSON response with translatedText and optional alternatives/detectedLanguage.", "tags": ["http", "response"], "complexity": "simple", "filePath": "ltengine/src/main.rs", "lineRange": [262, 278] },
+
+    { "id": "step:detect-language:parse-payload", "type": "step", "name": "Parse Payload", "summary": "Parses and validates the request, requiring the q parameter.", "tags": ["parsing", "validation"], "complexity": "simple", "filePath": "ltengine/src/main.rs", "lineRange": [192, 196] },
+    { "id": "step:detect-language:detect", "type": "step", "name": "Detect Language", "summary": "Runs detect_lang on the text to obtain language code and confidence.", "tags": ["detection"], "complexity": "simple", "filePath": "ltengine/src/main.rs", "lineRange": [198, 199] },
+    { "id": "step:detect-language:respond", "type": "step", "name": "Respond", "summary": "Returns a JSON array with the detected language code and confidence.", "tags": ["http", "response"], "complexity": "simple", "filePath": "ltengine/src/main.rs", "lineRange": [201, 204] },
+
+    { "id": "step:list-languages:serialize-catalog", "type": "step", "name": "Serialize Catalog", "summary": "Serializes the LANGUAGES catalog as JSON.", "tags": ["languages", "response"], "complexity": "simple", "filePath": "ltengine/src/main.rs", "lineRange": [297, 300] },
+
+    { "id": "step:frontend-settings:build-settings", "type": "step", "name": "Build Settings", "summary": "Builds and returns the frontend settings JSON including char limit and default languages.", "tags": ["settings", "response"], "complexity": "simple", "filePath": "ltengine/src/main.rs", "lineRange": [307, 328] },
+
+    { "id": "step:server-bootstrap:parse-args", "type": "step", "name": "Parse CLI Args", "summary": "Parses host, port, model, char limit, API key and acceleration flags with clap.", "tags": ["cli", "config"], "complexity": "simple", "filePath": "ltengine/src/main.rs", "lineRange": [332, 332] },
+    { "id": "step:server-bootstrap:load-model", "type": "step", "name": "Load Model", "summary": "Resolves and loads the model file, exiting on failure.", "tags": ["models", "startup"], "complexity": "simple", "filePath": "ltengine/src/main.rs", "lineRange": [337, 342] },
+    { "id": "step:server-bootstrap:init-llm", "type": "step", "name": "Initialize LLM", "summary": "Creates the shared LLM instance from the loaded model, exiting on failure.", "tags": ["llm", "startup"], "complexity": "simple", "filePath": "ltengine/src/main.rs", "lineRange": [344, 347] },
+    { "id": "step:server-bootstrap:register-routes", "type": "step", "name": "Register Routes", "summary": "Registers all HTTP services and static resource files on the actix-web App.", "tags": ["http", "routing"], "complexity": "simple", "filePath": "ltengine/src/main.rs", "lineRange": [351, 366] },
+    { "id": "step:server-bootstrap:bind-and-run", "type": "step", "name": "Bind and Run", "summary": "Binds the server to host:port and runs the event loop.", "tags": ["server", "startup"], "complexity": "simple", "filePath": "ltengine/src/main.rs", "lineRange": [367, 372] },
+
+    { "id": "step:auto-detect-source:build-allowlist", "type": "step", "name": "Build Allowlist", "summary": "Builds the whatlang allowlist from the supported language catalog.", "tags": ["detection", "languages"], "complexity": "simple", "filePath": "ltengine/src/languages.rs", "lineRange": [123, 127] },
+    { "id": "step:auto-detect-source:run-detector", "type": "step", "name": "Run Detector", "summary": "Runs the whatlang Detector over the input text to obtain language and confidence.", "tags": ["detection", "whatlang"], "complexity": "simple", "filePath": "ltengine/src/languages.rs", "lineRange": [128, 132] },
+    { "id": "step:auto-detect-source:map-to-language", "type": "step", "name": "Map to Language", "summary": "Maps the detected whatlang Lang back to a catalog Language, defaulting to English on failure.", "tags": ["detection", "languages"], "complexity": "moderate", "filePath": "ltengine/src/languages.rs", "lineRange": [133, 145] },
+
+    { "id": "step:generate-translation:apply-chat-template", "type": "step", "name": "Apply Chat Template", "summary": "Applies the model's chat template to the system and user messages.", "tags": ["llm", "prompt"], "complexity": "moderate", "filePath": "ltengine/src/llm.rs", "lineRange": [67, 71] },
+    { "id": "step:generate-translation:tokenize", "type": "step", "name": "Tokenize", "summary": "Converts the templated prompt string into tokens with a BOS marker.", "tags": ["llm", "tokenization"], "complexity": "simple", "filePath": "ltengine/src/llm.rs", "lineRange": [73, 80] },
+    { "id": "step:generate-translation:create-context", "type": "step", "name": "Create Context", "summary": "Creates a llama context sized to 3x the prompt tokens, locking the prompt mutex.", "tags": ["llm", "context"], "complexity": "moderate", "filePath": "ltengine/src/llm.rs", "lineRange": [80, 91] },
+    { "id": "step:generate-translation:decode-and-sample", "type": "step", "name": "Decode and Sample", "summary": "Decodes the batch and samples tokens with a chained sampler (dry, top-k, top-p, etc.) until end-of-generation.", "tags": ["llm", "sampling", "inference"], "complexity": "complex", "filePath": "ltengine/src/llm.rs", "lineRange": [99, 160] },
+    { "id": "step:generate-translation:collect-output", "type": "step", "name": "Collect Output", "summary": "Accumulates decoded token pieces into the final translated string.", "tags": ["llm", "output"], "complexity": "simple", "filePath": "ltengine/src/llm.rs", "lineRange": [131, 162] },
+
+    { "id": "step:resolve-and-load-model:select-source", "type": "step", "name": "Select Source", "summary": "Chooses a Local model from --model-file or a Remote model from the registry.", "tags": ["models"], "complexity": "simple", "filePath": "ltengine/src/models.rs", "lineRange": [53, 62] },
+    { "id": "step:resolve-and-load-model:validate-local", "type": "step", "name": "Validate Local File", "summary": "Validates that the local path exists and has a .gguf extension.", "tags": ["models", "validation"], "complexity": "simple", "filePath": "ltengine/src/models.rs", "lineRange": [35, 41] },
+    { "id": "step:resolve-and-load-model:download-remote", "type": "step", "name": "Download Remote Model", "summary": "Downloads the registered GGUF model from HuggingFace with progress.", "tags": ["models", "huggingface", "download"], "complexity": "moderate", "filePath": "ltengine/src/models.rs", "lineRange": [42, 48] },
+
+    { "id": "step:ui-translate:capture-input", "type": "step", "name": "Capture Input", "summary": "Captures input text and language selections, updating URL query params.", "tags": ["frontend", "input"], "complexity": "simple", "filePath": "ltengine/resources/static/app.js", "lineRange": [215, 234] },
+    { "id": "step:ui-translate:debounce", "type": "step", "name": "Debounce Request", "summary": "Debounces translation by frontendTimeout and aborts any in-flight request.", "tags": ["frontend", "debounce"], "complexity": "simple", "filePath": "ltengine/resources/static/app.js", "lineRange": [238, 244] },
+    { "id": "step:ui-translate:post-translate", "type": "step", "name": "POST /translate", "summary": "Sends the input, languages, format and API key as multipart form data to /translate.", "tags": ["frontend", "http"], "complexity": "simple", "filePath": "ltengine/resources/static/app.js", "lineRange": [245, 287] },
+    { "id": "step:ui-translate:render-result", "type": "step", "name": "Render Result", "summary": "Parses the response and updates translatedText and the raw output display.", "tags": ["frontend", "render"], "complexity": "simple", "filePath": "ltengine/resources/static/app.js", "lineRange": [263, 268] },
+    { "id": "step:ui-translate:show-detected-language", "type": "step", "name": "Show Detected Language", "summary": "When source is auto, displays the detected language name and confidence.", "tags": ["frontend", "detection"], "complexity": "simple", "filePath": "ltengine/resources/static/app.js", "lineRange": [269, 272] },
+
+    { "id": "step:ui-bootstrap:load-settings", "type": "step", "name": "Load Settings", "summary": "Requests /frontend/settings and applies char limit, default languages and feature flags.", "tags": ["frontend", "startup"], "complexity": "simple", "filePath": "ltengine/resources/static/app.js", "lineRange": [50, 66] },
+    { "id": "step:ui-bootstrap:load-languages", "type": "step", "name": "Load Languages", "summary": "Requests /languages, normalizes names and appends the Auto Detect option.", "tags": ["frontend", "languages"], "complexity": "simple", "filePath": "ltengine/resources/static/app.js", "lineRange": [459, 475] },
+    { "id": "step:ui-bootstrap:apply-query-params", "type": "step", "name": "Apply Query Params", "summary": "Reads source/target/q URL params to prefill the UI and trigger an initial translation.", "tags": ["frontend", "deep-link"], "complexity": "simple", "filePath": "ltengine/resources/static/app.js", "lineRange": [477, 493] }
+  ],
+  "edges": [
+    { "source": "domain:translation-api", "target": "flow:translate-text", "type": "contains_flow", "direction": "forward", "weight": 1.0 },
+    { "source": "domain:translation-api", "target": "flow:detect-language", "type": "contains_flow", "direction": "forward", "weight": 1.0 },
+    { "source": "domain:translation-api", "target": "flow:list-languages", "type": "contains_flow", "direction": "forward", "weight": 1.0 },
+    { "source": "domain:translation-api", "target": "flow:frontend-settings", "type": "contains_flow", "direction": "forward", "weight": 1.0 },
+    { "source": "domain:translation-api", "target": "flow:server-bootstrap", "type": "contains_flow", "direction": "forward", "weight": 1.0 },
+
+    { "source": "domain:language-services", "target": "flow:auto-detect-source", "type": "contains_flow", "direction": "forward", "weight": 1.0 },
+
+    { "source": "domain:llm-translation", "target": "flow:generate-translation", "type": "contains_flow", "direction": "forward", "weight": 1.0 },
+
+    { "source": "domain:model-management", "target": "flow:resolve-and-load-model", "type": "contains_flow", "direction": "forward", "weight": 1.0 },
+
+    { "source": "domain:web-ui", "target": "flow:ui-translate", "type": "contains_flow", "direction": "forward", "weight": 1.0 },
+    { "source": "domain:web-ui", "target": "flow:ui-bootstrap", "type": "contains_flow", "direction": "forward", "weight": 1.0 },
+
+    { "source": "flow:translate-text", "target": "step:translate-text:parse-payload", "type": "flow_step", "direction": "forward", "weight": 0.1 },
+    { "source": "flow:translate-text", "target": "step:translate-text:validate-params", "type": "flow_step", "direction": "forward", "weight": 0.2 },
+    { "source": "flow:translate-text", "target": "step:translate-text:check-format", "type": "flow_step", "direction": "forward", "weight": 0.3 },
+    { "source": "flow:translate-text", "target": "step:translate-text:resolve-languages", "type": "flow_step", "direction": "forward", "weight": 0.4 },
+    { "source": "flow:translate-text", "target": "step:translate-text:build-prompt", "type": "flow_step", "direction": "forward", "weight": 0.5 },
+    { "source": "flow:translate-text", "target": "step:translate-text:run-inference", "type": "flow_step", "direction": "forward", "weight": 0.6 },
+    { "source": "flow:translate-text", "target": "step:translate-text:improve-formatting", "type": "flow_step", "direction": "forward", "weight": 0.7 },
+    { "source": "flow:translate-text", "target": "step:translate-text:attach-detected-language", "type": "flow_step", "direction": "forward", "weight": 0.8 },
+    { "source": "flow:translate-text", "target": "step:translate-text:respond", "type": "flow_step", "direction": "forward", "weight": 0.9 },
+
+    { "source": "flow:detect-language", "target": "step:detect-language:parse-payload", "type": "flow_step", "direction": "forward", "weight": 0.3 },
+    { "source": "flow:detect-language", "target": "step:detect-language:detect", "type": "flow_step", "direction": "forward", "weight": 0.6 },
+    { "source": "flow:detect-language", "target": "step:detect-language:respond", "type": "flow_step", "direction": "forward", "weight": 0.9 },
+
+    { "source": "flow:list-languages", "target": "step:list-languages:serialize-catalog", "type": "flow_step", "direction": "forward", "weight": 1.0 },
+
+    { "source": "flow:frontend-settings", "target": "step:frontend-settings:build-settings", "type": "flow_step", "direction": "forward", "weight": 1.0 },
+
+    { "source": "flow:server-bootstrap", "target": "step:server-bootstrap:parse-args", "type": "flow_step", "direction": "forward", "weight": 0.2 },
+    { "source": "flow:server-bootstrap", "target": "step:server-bootstrap:load-model", "type": "flow_step", "direction": "forward", "weight": 0.4 },
+    { "source": "flow:server-bootstrap", "target": "step:server-bootstrap:init-llm", "type": "flow_step", "direction": "forward", "weight": 0.6 },
+    { "source": "flow:server-bootstrap", "target": "step:server-bootstrap:register-routes", "type": "flow_step", "direction": "forward", "weight": 0.8 },
+    { "source": "flow:server-bootstrap", "target": "step:server-bootstrap:bind-and-run", "type": "flow_step", "direction": "forward", "weight": 1.0 },
+
+    { "source": "flow:auto-detect-source", "target": "step:auto-detect-source:build-allowlist", "type": "flow_step", "direction": "forward", "weight": 0.3 },
+    { "source": "flow:auto-detect-source", "target": "step:auto-detect-source:run-detector", "type": "flow_step", "direction": "forward", "weight": 0.6 },
+    { "source": "flow:auto-detect-source", "target": "step:auto-detect-source:map-to-language", "type": "flow_step", "direction": "forward", "weight": 0.9 },
+
+    { "source": "flow:generate-translation", "target": "step:generate-translation:apply-chat-template", "type": "flow_step", "direction": "forward", "weight": 0.2 },
+    { "source": "flow:generate-translation", "target": "step:generate-translation:tokenize", "type": "flow_step", "direction": "forward", "weight": 0.4 },
+    { "source": "flow:generate-translation", "target": "step:generate-translation:create-context", "type": "flow_step", "direction": "forward", "weight": 0.6 },
+    { "source": "flow:generate-translation", "target": "step:generate-translation:decode-and-sample", "type": "flow_step", "direction": "forward", "weight": 0.8 },
+    { "source": "flow:generate-translation", "target": "step:generate-translation:collect-output", "type": "flow_step", "direction": "forward", "weight": 1.0 },
+
+    { "source": "flow:resolve-and-load-model", "target": "step:resolve-and-load-model:select-source", "type": "flow_step", "direction": "forward", "weight": 0.3 },
+    { "source": "flow:resolve-and-load-model", "target": "step:resolve-and-load-model:validate-local", "type": "flow_step", "direction": "forward", "weight": 0.6 },
+    { "source": "flow:resolve-and-load-model", "target": "step:resolve-and-load-model:download-remote", "type": "flow_step", "direction": "forward", "weight": 0.9 },
+
+    { "source": "flow:ui-translate", "target": "step:ui-translate:capture-input", "type": "flow_step", "direction": "forward", "weight": 0.2 },
+    { "source": "flow:ui-translate", "target": "step:ui-translate:debounce", "type": "flow_step", "direction": "forward", "weight": 0.4 },
+    { "source": "flow:ui-translate", "target": "step:ui-translate:post-translate", "type": "flow_step", "direction": "forward", "weight": 0.6 },
+    { "source": "flow:ui-translate", "target": "step:ui-translate:render-result", "type": "flow_step", "direction": "forward", "weight": 0.8 },
+    { "source": "flow:ui-translate", "target": "step:ui-translate:show-detected-language", "type": "flow_step", "direction": "forward", "weight": 1.0 },
+
+    { "source": "flow:ui-bootstrap", "target": "step:ui-bootstrap:load-settings", "type": "flow_step", "direction": "forward", "weight": 0.3 },
+    { "source": "flow:ui-bootstrap", "target": "step:ui-bootstrap:load-languages", "type": "flow_step", "direction": "forward", "weight": 0.6 },
+    { "source": "flow:ui-bootstrap", "target": "step:ui-bootstrap:apply-query-params", "type": "flow_step", "direction": "forward", "weight": 0.9 },
+
+    { "source": "domain:translation-api", "target": "domain:language-services", "type": "cross_domain", "direction": "forward", "description": "The /translate and /detect endpoints call detect_lang and resolve language codes to names via Language Services", "weight": 0.7 },
+    { "source": "domain:translation-api", "target": "domain:llm-translation", "type": "cross_domain", "direction": "forward", "description": "The /translate endpoint builds a Prompt and calls LLM.run_prompt to generate the translation", "weight": 0.8 },
+    { "source": "domain:llm-translation", "target": "domain:language-services", "type": "cross_domain", "direction": "forward", "description": "PromptBuilder uses resolved source/target language display names from the language catalog", "weight": 0.6 },
+    { "source": "domain:model-management", "target": "domain:llm-translation", "type": "cross_domain", "direction": "forward", "description": "load_model resolves the GGUF path consumed by LLM::new during server bootstrap", "weight": 0.7 },
+    { "source": "domain:web-ui", "target": "domain:translation-api", "type": "cross_domain", "direction": "forward", "description": "The Vue frontend calls /frontend/settings, /languages and /translate over HTTP", "weight": 0.6 }
+  ],
+  "layers": [],
+  "tour": []
+}

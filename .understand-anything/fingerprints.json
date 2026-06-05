@@ -1,0 +1,1245 @@
+{
+  "version": "1.0.0",
+  "gitCommitHash": "2b7e0aaaec39a4ae5c39fa34631e16757949b5e0",
+  "generatedAt": "2026-06-05T04:15:19.907Z",
+  "files": {
+    ".github/workflows/build.yml": {
+      "filePath": ".github/workflows/build.yml",
+      "contentHash": "10a16c076646fa626bd694fa7fde283fb5a3f205d88a9708f434a02bdfeda3b8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 33,
+      "hasStructuralAnalysis": true
+    },
+    ".understand-anything/.understandignore": {
+      "filePath": ".understand-anything/.understandignore",
+      "contentHash": "acd93fbe140302516880d4f2889661d365774858aa85f2cde94a10149055fdd0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 27,
+      "hasStructuralAnalysis": false
+    },
+    ".understand-anything/config.json": {
+      "filePath": ".understand-anything/config.json",
+      "contentHash": "89225acfdfaff58c94b762ac1e1368c4a9bdfa7dba230dd509d5cd768ad5284c",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 4,
+      "hasStructuralAnalysis": true
+    },
+    ".understand-anything/domain-graph.json": {
+      "filePath": ".understand-anything/domain-graph.json",
+      "contentHash": "4ca5276904031d93e25112f2aea1f528a8d0bce2ac678d20569ff88129c1edbf",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 255,
+      "hasStructuralAnalysis": true
+    },
+    ".understand-anything/fingerprints.json": {
+      "filePath": ".understand-anything/fingerprints.json",
+      "contentHash": "f1ee10c045583500b07f46a9f88c670a6bf547930b613a4dcc484c68d7dbfd23",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1032,
+      "hasStructuralAnalysis": true
+    },
+    ".understand-anything/knowledge-graph.json": {
+      "filePath": ".understand-anything/knowledge-graph.json",
+      "contentHash": "229a517d9452767d844fd2fbc22683beb0199224d178ad6168cda5d12aaadb46",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2455,
+      "hasStructuralAnalysis": true
+    },
+    ".understand-anything/meta.json": {
+      "filePath": ".understand-anything/meta.json",
+      "contentHash": "b79652c4914825bdb73cedd89ee444764629cb99376772fac1780fc105347413",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 7,
+      "hasStructuralAnalysis": true
+    },
+    ".understand-anything/tmp/changed-files.txt": {
+      "filePath": ".understand-anything/tmp/changed-files.txt",
+      "contentHash": "a7e3f466f75ac42f7f71cf71f1eae1d4d0a13b65e5f5a2dd12b0774ad65b024d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 4,
+      "hasStructuralAnalysis": false
+    },
+    "build-macos.sh": {
+      "filePath": "build-macos.sh",
+      "contentHash": "850fc4cad8f2b6d85e976ed5d036b35c04a517411761bb318a7993e764efb62b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 73,
+      "hasStructuralAnalysis": true
+    },
+    "Cargo.toml": {
+      "filePath": "Cargo.toml",
+      "contentHash": "bda75cd80d6a2bc155fe7171532d6ecbd9c8b64d89334b6c4e64f96871030306",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 24,
+      "hasStructuralAnalysis": true
+    },
+    "ltengine/build.rs": {
+      "filePath": "ltengine/build.rs",
+      "contentHash": "1dc40f769aa4b2d97e6d92e6e434efa78e966ed070b6e6ffcc3e21ad53e88e34",
+      "functions": [
+        {
+          "name": "main",
+          "params": [],
+          "returnType": "std::io::Result<()>",
+          "exported": false,
+          "lineCount": 3
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "static_files",
+          "specifiers": [
+            "resource_dir"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 5,
+      "hasStructuralAnalysis": true
+    },
+    "ltengine/Cargo.toml": {
+      "filePath": "ltengine/Cargo.toml",
+      "contentHash": "67515f165b184f2d9b01f6b513fa771297f99351fa468e7d153a0f47918b3be7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 37,
+      "hasStructuralAnalysis": true
+    },
+    "ltengine/resources/index.html": {
+      "filePath": "ltengine/resources/index.html",
+      "contentHash": "aefffe4e303096e53efd8abbc8a56a89e124323aa85c58bda9b9f6021a7db20e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 285,
+      "hasStructuralAnalysis": false
+    },
+    "ltengine/resources/static/app.js": {
+      "filePath": "ltengine/resources/static/app.js",
+      "contentHash": "86bce14be88149924f318faa62495e06d13bcadf1c93826f7bdbd480ef3ad958",
+      "functions": [
+        {
+          "name": "handleLangsResponse",
+          "params": [
+            "self",
+            "response"
+          ],
+          "exported": false,
+          "lineCount": 41
+        },
+        {
+          "name": "handleNotification",
+          "params": [
+            "title",
+            "body"
+          ],
+          "exported": false,
+          "lineCount": 6
+        },
+        {
+          "name": "updateSelectedAttribute",
+          "params": [
+            "langDropdown",
+            "lang"
+          ],
+          "exported": false,
+          "lineCount": 10
+        },
+        {
+          "name": "getTextWidth",
+          "params": [
+            "text"
+          ],
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "setApiKey",
+          "params": [],
+          "exported": false,
+          "lineCount": 11
+        },
+        {
+          "name": "getPreferredColorScheme",
+          "params": [],
+          "exported": false,
+          "lineCount": 17
+        },
+        {
+          "name": "savePreferredColorScheme",
+          "params": [
+            "scheme"
+          ],
+          "exported": false,
+          "lineCount": 14
+        },
+        {
+          "name": "toggleColorScheme",
+          "params": [],
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "applyPreferredColorScheme",
+          "params": [
+            "scheme"
+          ],
+          "exported": false,
+          "lineCount": 28
+        }
+      ],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 626,
+      "hasStructuralAnalysis": true
+    },
+    "ltengine/resources/static/css/main.css": {
+      "filePath": "ltengine/resources/static/css/main.css",
+      "contentHash": "302315f067e39b78cad514049f308c2186386a12d1abf6e1d3b12d8a8c2a79b3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 489,
+      "hasStructuralAnalysis": false
+    },
+    "ltengine/resources/static/css/material-icons.css": {
+      "filePath": "ltengine/resources/static/css/material-icons.css",
+      "contentHash": "9dcb40345e5c546f792cb12a0201db4b5ddc44cb4b1c244eecd71bcccc6f4e1f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 37,
+      "hasStructuralAnalysis": false
+    },
+    "ltengine/resources/static/js/vue@2.js": {
+      "filePath": "ltengine/resources/static/js/vue@2.js",
+      "contentHash": "e6e28a8fb9b74533ece152229dafcc3ebc0f4b3dcd62879df115706bce55927d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "ltengine/src/banner.rs": {
+      "filePath": "ltengine/src/banner.rs",
+      "contentHash": "bbc06135b7808edeea6f46f6b435c9908ae8f68d902d0d9ee88db1ea21a47ee5",
+      "functions": [
+        {
+          "name": "print_banner",
+          "params": [],
+          "exported": true,
+          "lineCount": 14
+        }
+      ],
+      "classes": [],
+      "imports": [],
+      "exports": [
+        "print_banner"
+      ],
+      "totalLines": 14,
+      "hasStructuralAnalysis": true
+    },
+    "ltengine/src/error_response.rs": {
+      "filePath": "ltengine/src/error_response.rs",
+      "contentHash": "b709897b6bdbb78588ac8c023495d787939d7b3ec216b1dcb8d8cba9d5463079",
+      "functions": [
+        {
+          "name": "fmt",
+          "params": [
+            "f"
+          ],
+          "returnType": "FmtResult",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "status_code",
+          "params": [],
+          "returnType": "StatusCode",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "error_response",
+          "params": [],
+          "returnType": "HttpResponse<BoxBody>",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "from",
+          "params": [
+            "err"
+          ],
+          "returnType": "Self",
+          "exported": false,
+          "lineCount": 6
+        }
+      ],
+      "classes": [
+        {
+          "name": "ErrorResponse",
+          "methods": [
+            "fmt",
+            "status_code",
+            "error_response",
+            "from"
+          ],
+          "properties": [
+            "error",
+            "status"
+          ],
+          "exported": true,
+          "lineCount": 4
+        }
+      ],
+      "imports": [
+        {
+          "source": "serde",
+          "specifiers": [
+            "Serialize"
+          ]
+        },
+        {
+          "source": "std::fmt",
+          "specifiers": [
+            "Display",
+            "Formatter"
+          ]
+        },
+        {
+          "source": "serde_json",
+          "specifiers": [
+            "to_string_pretty"
+          ]
+        },
+        {
+          "source": "actix_web",
+          "specifiers": [
+            "ResponseError",
+            "HttpResponse",
+            "body::BoxBody"
+          ]
+        },
+        {
+          "source": "actix_web::http",
+          "specifiers": [
+            "StatusCode"
+          ]
+        }
+      ],
+      "exports": [
+        "ErrorResponse"
+      ],
+      "totalLines": 36,
+      "hasStructuralAnalysis": true
+    },
+    "ltengine/src/languages.rs": {
+      "filePath": "ltengine/src/languages.rs",
+      "contentHash": "0217a38fdb4a81ce335218e29e82d2eacdd86615083b88428b7e8eb4857a38f8",
+      "functions": [
+        {
+          "name": "get_language_from_code",
+          "params": [
+            "code"
+          ],
+          "returnType": "Option<&'static Language>",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "detect_lang",
+          "params": [
+            "q"
+          ],
+          "returnType": "LangDetect",
+          "exported": true,
+          "lineCount": 25
+        }
+      ],
+      "classes": [
+        {
+          "name": "Language",
+          "methods": [],
+          "properties": [
+            "code",
+            "name",
+            "targets",
+            "lang_detect",
+            "internal_code"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "LangDetect",
+          "methods": [],
+          "properties": [
+            "language",
+            "confidence"
+          ],
+          "exported": true,
+          "lineCount": 4
+        }
+      ],
+      "imports": [
+        {
+          "source": "serde",
+          "specifiers": [
+            "Serialize"
+          ]
+        },
+        {
+          "source": "once_cell::sync",
+          "specifiers": [
+            "Lazy"
+          ]
+        },
+        {
+          "source": "whatlang",
+          "specifiers": [
+            "Lang",
+            "Detector"
+          ]
+        },
+        {
+          "source": "std::collections",
+          "specifiers": [
+            "HashMap"
+          ]
+        }
+      ],
+      "exports": [
+        "Language",
+        "get_language_from_code",
+        "LangDetect",
+        "detect_lang"
+      ],
+      "totalLines": 146,
+      "hasStructuralAnalysis": true
+    },
+    "ltengine/src/llm_api.rs": {
+      "filePath": "ltengine/src/llm_api.rs",
+      "contentHash": "91083bcff56fe1ebb9ebe39582a2710a074e7a899c5bf5db1a9a444272348996",
+      "functions": [
+        {
+          "name": "new",
+          "params": [
+            "url",
+            "api_key",
+            "model",
+            "max_tokens",
+            "timeout_secs"
+          ],
+          "returnType": "Result<Self>",
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "resolve_model",
+          "params": [],
+          "returnType": "Result<String>",
+          "exported": true,
+          "lineCount": 28
+        },
+        {
+          "name": "run_prompt",
+          "params": [
+            "system",
+            "user"
+          ],
+          "returnType": "Result<String>",
+          "exported": true,
+          "lineCount": 37
+        }
+      ],
+      "classes": [
+        {
+          "name": "LLM",
+          "methods": [
+            "new",
+            "resolve_model",
+            "run_prompt"
+          ],
+          "properties": [
+            "url",
+            "api_key",
+            "model",
+            "max_tokens",
+            "client"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "ChatMessage",
+          "methods": [],
+          "properties": [
+            "role",
+            "content"
+          ],
+          "exported": false,
+          "lineCount": 4
+        },
+        {
+          "name": "ChatCompletionRequest",
+          "methods": [],
+          "properties": [
+            "model",
+            "messages",
+            "temperature",
+            "max_tokens"
+          ],
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "ChatCompletionResponse",
+          "methods": [],
+          "properties": [
+            "choices"
+          ],
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "Choice",
+          "methods": [],
+          "properties": [
+            "message"
+          ],
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "ResponseMessage",
+          "methods": [],
+          "properties": [
+            "content"
+          ],
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "ModelsResponse",
+          "methods": [],
+          "properties": [
+            "data"
+          ],
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "ModelEntry",
+          "methods": [],
+          "properties": [
+            "id"
+          ],
+          "exported": false,
+          "lineCount": 3
+        }
+      ],
+      "imports": [
+        {
+          "source": "anyhow",
+          "specifiers": [
+            "Result",
+            "Context"
+          ]
+        },
+        {
+          "source": "serde",
+          "specifiers": [
+            "Deserialize",
+            "Serialize"
+          ]
+        },
+        {
+          "source": "std::time",
+          "specifiers": [
+            "Duration"
+          ]
+        }
+      ],
+      "exports": [
+        "LLM",
+        "new",
+        "resolve_model",
+        "run_prompt"
+      ],
+      "totalLines": 129,
+      "hasStructuralAnalysis": true
+    },
+    "ltengine/src/llm.rs": {
+      "filePath": "ltengine/src/llm.rs",
+      "contentHash": "95ab49e4e546cfa58331598f903145ed3946c1c38f74e992c5f4fa91a9578143",
+      "functions": [
+        {
+          "name": "new",
+          "params": [
+            "model_path",
+            "cpu",
+            "verbose"
+          ],
+          "returnType": "Result<Self>",
+          "exported": true,
+          "lineCount": 20
+        },
+        {
+          "name": "create_context",
+          "params": [
+            "ctx_size"
+          ],
+          "returnType": "Result<LLMContext<'_>>",
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "run_prompt",
+          "params": [
+            "system",
+            "user"
+          ],
+          "returnType": "Result<String>",
+          "exported": true,
+          "lineCount": 26
+        },
+        {
+          "name": "process",
+          "params": [
+            "tokens_list"
+          ],
+          "returnType": "Result<String>",
+          "exported": true,
+          "lineCount": 69
+        }
+      ],
+      "classes": [
+        {
+          "name": "LLM",
+          "methods": [
+            "new",
+            "create_context",
+            "run_prompt"
+          ],
+          "properties": [
+            "backend",
+            "model",
+            "prompt_lock"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "LLMContext",
+          "methods": [],
+          "properties": [
+            "llm",
+            "ctx",
+            "ctx_size"
+          ],
+          "exported": true,
+          "lineCount": 5
+        }
+      ],
+      "imports": [
+        {
+          "source": "llama_cpp_bindings::context::params",
+          "specifiers": [
+            "LlamaContextParams"
+          ]
+        },
+        {
+          "source": "llama_cpp_bindings::llama_backend",
+          "specifiers": [
+            "LlamaBackend"
+          ]
+        },
+        {
+          "source": "llama_cpp_bindings::model::params",
+          "specifiers": [
+            "LlamaModelParams"
+          ]
+        },
+        {
+          "source": "llama_cpp_bindings::model",
+          "specifiers": [
+            "LlamaModel",
+            "LlamaChatMessage"
+          ]
+        },
+        {
+          "source": "llama_cpp_bindings::token",
+          "specifiers": [
+            "LlamaToken"
+          ]
+        },
+        {
+          "source": "llama_cpp_bindings::context",
+          "specifiers": [
+            "LlamaContext"
+          ]
+        },
+        {
+          "source": "llama_cpp_bindings::model",
+          "specifiers": [
+            "AddBos"
+          ]
+        },
+        {
+          "source": "llama_cpp_bindings::llama_batch",
+          "specifiers": [
+            "LlamaBatch"
+          ]
+        },
+        {
+          "source": "llama_cpp_bindings::sampling",
+          "specifiers": [
+            "LlamaSampler"
+          ]
+        },
+        {
+          "source": "llama_cpp_bindings::sampled_token",
+          "specifiers": [
+            "SampledToken"
+          ]
+        },
+        {
+          "source": "llama_cpp_bindings",
+          "specifiers": [
+            "send_logs_to_log",
+            "LogOptions"
+          ]
+        },
+        {
+          "source": "std::num",
+          "specifiers": [
+            "NonZeroU32"
+          ]
+        },
+        {
+          "source": "std::path",
+          "specifiers": [
+            "PathBuf"
+          ]
+        },
+        {
+          "source": "std::sync",
+          "specifiers": [
+            "Mutex"
+          ]
+        },
+        {
+          "source": "anyhow",
+          "specifiers": [
+            "Result",
+            "Context"
+          ]
+        }
+      ],
+      "exports": [
+        "LLM",
+        "LLMContext",
+        "new",
+        "create_context",
+        "run_prompt",
+        "process"
+      ],
+      "totalLines": 165,
+      "hasStructuralAnalysis": true
+    },
+    "ltengine/src/main.rs": {
+      "filePath": "ltengine/src/main.rs",
+      "contentHash": "74da0c6b100ba56658cce9246f23ab08a8f50345a89a1ad04e33b90cb7f11681",
+      "functions": [
+        {
+          "name": "into_translate_request",
+          "params": [],
+          "returnType": "TranslateRequest",
+          "exported": false,
+          "lineCount": 10
+        },
+        {
+          "name": "parse_payload",
+          "params": [
+            "req",
+            "payload"
+          ],
+          "returnType": "Result<TranslateRequest, ErrorResponse>",
+          "exported": false,
+          "lineCount": 19
+        },
+        {
+          "name": "check_params",
+          "params": [
+            "body",
+            "args",
+            "required_params"
+          ],
+          "returnType": "Result<bool, ErrorResponse>",
+          "exported": false,
+          "lineCount": 29
+        },
+        {
+          "name": "improve_formatting",
+          "params": [
+            "q",
+            "translation"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 46
+        },
+        {
+          "name": "detect",
+          "params": [
+            "req",
+            "payload",
+            "args"
+          ],
+          "returnType": "Result<HttpResponse, ErrorResponse>",
+          "exported": false,
+          "lineCount": 14
+        },
+        {
+          "name": "check_format",
+          "params": [
+            "format"
+          ],
+          "returnType": "Result<bool, ErrorResponse>",
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "translate",
+          "params": [
+            "req",
+            "payload",
+            "args",
+            "llm"
+          ],
+          "returnType": "Result<HttpResponse, ErrorResponse>",
+          "exported": false,
+          "lineCount": 65
+        },
+        {
+          "name": "translate_file",
+          "params": [],
+          "returnType": "Result<HttpResponse, ErrorResponse>",
+          "exported": false,
+          "lineCount": 6
+        },
+        {
+          "name": "suggest",
+          "params": [],
+          "returnType": "Result<HttpResponse, ErrorResponse>",
+          "exported": false,
+          "lineCount": 6
+        },
+        {
+          "name": "get_languages",
+          "params": [],
+          "returnType": "impl Responder",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "health",
+          "params": [],
+          "returnType": "impl Responder",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "get_frontend_settings",
+          "params": [
+            "args"
+          ],
+          "returnType": "impl Responder",
+          "exported": false,
+          "lineCount": 21
+        },
+        {
+          "name": "main",
+          "params": [],
+          "returnType": "std::io::Result<()>",
+          "exported": false,
+          "lineCount": 71
+        }
+      ],
+      "classes": [
+        {
+          "name": "Args",
+          "methods": [],
+          "properties": [
+            "host",
+            "port",
+            "char_limit",
+            "model",
+            "model_file",
+            "api_key",
+            "cpu",
+            "llm_url",
+            "llm_api_key",
+            "llm_model",
+            "llm_max_tokens",
+            "llm_timeout",
+            "verbose"
+          ],
+          "exported": false,
+          "lineCount": 61
+        },
+        {
+          "name": "TranslateRequest",
+          "methods": [],
+          "properties": [
+            "q",
+            "source",
+            "target",
+            "format",
+            "api_key",
+            "alternatives"
+          ],
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "MPTranslateRequest",
+          "methods": [
+            "into_translate_request"
+          ],
+          "properties": [
+            "q",
+            "source",
+            "target",
+            "format",
+            "api_key",
+            "alternatives"
+          ],
+          "exported": false,
+          "lineCount": 8
+        }
+      ],
+      "imports": [
+        {
+          "source": "actix_web",
+          "specifiers": [
+            "get",
+            "post",
+            "web",
+            "App",
+            "HttpRequest",
+            "HttpResponse",
+            "HttpServer",
+            "Responder",
+            "http::header",
+            "FromRequest"
+          ]
+        },
+        {
+          "source": "actix_multipart::form",
+          "specifiers": [
+            "MultipartForm"
+          ]
+        },
+        {
+          "source": "actix_web_prom",
+          "specifiers": [
+            "PrometheusMetricsBuilder"
+          ]
+        },
+        {
+          "source": "actix_web_static_files",
+          "specifiers": [
+            "ResourceFiles"
+          ]
+        },
+        {
+          "source": "std::sync",
+          "specifiers": [
+            "Arc"
+          ]
+        },
+        {
+          "source": "clap",
+          "specifiers": [
+            "Parser"
+          ]
+        },
+        {
+          "source": "serde",
+          "specifiers": [
+            "Deserialize",
+            "Serialize"
+          ]
+        },
+        {
+          "source": "languages",
+          "specifiers": [
+            "detect_lang",
+            "get_language_from_code",
+            "LANGUAGES"
+          ]
+        },
+        {
+          "source": "error_response",
+          "specifiers": [
+            "ErrorResponse"
+          ]
+        },
+        {
+          "source": "models",
+          "specifiers": [
+            "MODELS",
+            "load_model"
+          ]
+        },
+        {
+          "source": "banner",
+          "specifiers": [
+            "print_banner"
+          ]
+        },
+        {
+          "source": "prompt",
+          "specifiers": [
+            "PromptBuilder"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 439,
+      "hasStructuralAnalysis": true
+    },
+    "ltengine/src/models.rs": {
+      "filePath": "ltengine/src/models.rs",
+      "contentHash": "c3c309b659e8a9dd0e1634561bb4d33287873e5ee9a008b475c2a5bde96f4445",
+      "functions": [
+        {
+          "name": "load",
+          "params": [],
+          "returnType": "Result<PathBuf>",
+          "exported": false,
+          "lineCount": 18
+        },
+        {
+          "name": "load_model",
+          "params": [
+            "model_id",
+            "model_file"
+          ],
+          "returnType": "Result<PathBuf>",
+          "exported": true,
+          "lineCount": 16
+        }
+      ],
+      "classes": [
+        {
+          "name": "HuggingFace",
+          "methods": [],
+          "properties": [
+            "repo",
+            "model"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "Model",
+          "methods": [
+            "load"
+          ],
+          "properties": [
+            "Local",
+            "Remote"
+          ],
+          "exported": true,
+          "lineCount": 8
+        }
+      ],
+      "imports": [
+        {
+          "source": "std::collections",
+          "specifiers": [
+            "HashMap"
+          ]
+        },
+        {
+          "source": "std::path",
+          "specifiers": [
+            "PathBuf"
+          ]
+        },
+        {
+          "source": "hf_hub::api::sync",
+          "specifiers": [
+            "ApiBuilder"
+          ]
+        },
+        {
+          "source": "anyhow",
+          "specifiers": [
+            "anyhow",
+            "Context",
+            "Result"
+          ]
+        }
+      ],
+      "exports": [
+        "HuggingFace",
+        "Model",
+        "load_model"
+      ],
+      "totalLines": 68,
+      "hasStructuralAnalysis": true
+    },
+    "ltengine/src/prompt.rs": {
+      "filePath": "ltengine/src/prompt.rs",
+      "contentHash": "e4f276f1c6ca2db4f7d91a5e5cd49b8582fd5acc89d5cb1a9b2748aaedcff512",
+      "functions": [
+        {
+          "name": "new",
+          "params": [],
+          "returnType": "PromptBuilder",
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "set_format",
+          "params": [
+            "format"
+          ],
+          "returnType": "&mut PromptBuilder",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "set_source_language",
+          "params": [
+            "s"
+          ],
+          "returnType": "&mut PromptBuilder",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "set_target_language",
+          "params": [
+            "t"
+          ],
+          "returnType": "&mut PromptBuilder",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "build",
+          "params": [
+            "q"
+          ],
+          "returnType": "Prompt",
+          "exported": true,
+          "lineCount": 23
+        }
+      ],
+      "classes": [
+        {
+          "name": "PromptBuilder",
+          "methods": [
+            "new",
+            "set_format",
+            "set_source_language",
+            "set_target_language",
+            "build"
+          ],
+          "properties": [
+            "source_language",
+            "target_language",
+            "format"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "Prompt",
+          "methods": [],
+          "properties": [
+            "system",
+            "user"
+          ],
+          "exported": true,
+          "lineCount": 4
+        }
+      ],
+      "imports": [],
+      "exports": [
+        "PromptBuilder",
+        "Prompt",
+        "new",
+        "set_format",
+        "set_source_language",
+        "set_target_language",
+        "build"
+      ],
+      "totalLines": 60,
+      "hasStructuralAnalysis": true
+    },
+    "README.md": {
+      "filePath": "README.md",
+      "contentHash": "08e829aa09d586f0781718fc77106c3fbab8aba6b5fb8a4dc62e2c0ed30defef",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 166,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/warmup.sh": {
+      "filePath": "scripts/warmup.sh",
+      "contentHash": "d6a45b153d3579e94575ab17576021b7092148f42f037e752fde50c0f9683169",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 7,
+      "hasStructuralAnalysis": true
+    }
+  }
+}
