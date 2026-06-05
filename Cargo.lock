@@ -397,9 +397,9 @@ dependencies = [
 
 [[package]]
 name = "bitflags"
-version = "2.11.1"
+version = "2.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4512299f36f043ab09a583e57bceb5a5aab7a73db1805848e8fef3c9e8c78b3"
+checksum = "84d7ced0ae9557296835c32bf1b1e02b44c746701f898460fb000d7eaa84f00a"
 
 [[package]]
 name = "block-buffer"
@@ -1327,9 +1327,9 @@ dependencies = [
 
 [[package]]
 name = "hyper"
-version = "1.10.0"
+version = "1.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb92f162bf56536459fc83c79b974bb12837acfed43d6bc370a7916d0ae15ecc"
+checksum = "55281c53a1894c864990125767da440a4e630446785086f52523b20033b74498"
 dependencies = [
  "atomic-waker",
  "bytes",
@@ -1661,7 +1661,7 @@ checksum = "11d3d7f243d5c5a8b9bb5d6dd2b1602c0cb0b9db1621bafc7ed66e35ff9fe092"
 [[package]]
 name = "llama-cpp-bindings"
 version = "0.8.0"
-source = "git+https://github.com/intentee/llama-cpp-bindings?rev=aeb60a75fdb254c561ba0eecb9105bbc16302113#aeb60a75fdb254c561ba0eecb9105bbc16302113"
+source = "git+https://github.com/intentee/llama-cpp-bindings?tag=v0.8.0#a46b64a7483ebde4c56961ac4de95122190b3b08"
 dependencies = [
  "encoding_rs",
  "enumflags2",
@@ -1679,7 +1679,7 @@ dependencies = [
 [[package]]
 name = "llama-cpp-bindings-build"
 version = "0.8.0"
-source = "git+https://github.com/intentee/llama-cpp-bindings?rev=aeb60a75fdb254c561ba0eecb9105bbc16302113#aeb60a75fdb254c561ba0eecb9105bbc16302113"
+source = "git+https://github.com/intentee/llama-cpp-bindings?tag=v0.8.0#a46b64a7483ebde4c56961ac4de95122190b3b08"
 dependencies = [
  "bindgen",
  "cc",
@@ -1693,7 +1693,7 @@ dependencies = [
 [[package]]
 name = "llama-cpp-bindings-sys"
 version = "0.8.0"
-source = "git+https://github.com/intentee/llama-cpp-bindings?rev=aeb60a75fdb254c561ba0eecb9105bbc16302113#aeb60a75fdb254c561ba0eecb9105bbc16302113"
+source = "git+https://github.com/intentee/llama-cpp-bindings?tag=v0.8.0#a46b64a7483ebde4c56961ac4de95122190b3b08"
 dependencies = [
  "llama-cpp-bindings-build",
 ]
@@ -1701,7 +1701,7 @@ dependencies = [
 [[package]]
 name = "llama-cpp-bindings-types"
 version = "0.8.0"
-source = "git+https://github.com/intentee/llama-cpp-bindings?rev=aeb60a75fdb254c561ba0eecb9105bbc16302113#aeb60a75fdb254c561ba0eecb9105bbc16302113"
+source = "git+https://github.com/intentee/llama-cpp-bindings?tag=v0.8.0#a46b64a7483ebde4c56961ac4de95122190b3b08"
 dependencies = [
  "serde",
  "serde_json",
@@ -1711,7 +1711,7 @@ dependencies = [
 [[package]]
 name = "llama-cpp-log-decoder"
 version = "0.8.0"
-source = "git+https://github.com/intentee/llama-cpp-bindings?rev=aeb60a75fdb254c561ba0eecb9105bbc16302113#aeb60a75fdb254c561ba0eecb9105bbc16302113"
+source = "git+https://github.com/intentee/llama-cpp-bindings?tag=v0.8.0#a46b64a7483ebde4c56961ac4de95122190b3b08"
 
 [[package]]
 name = "llguidance"
@@ -3005,9 +3005,9 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "typenum"
-version = "1.20.0"
+version = "1.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40ce102ab67701b8526c123c1bab5cbe42d7040ccfd0f64af1a385808d2f43de"
+checksum = "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20"
 
 [[package]]
 name = "unicase"
@@ -3023,9 +3023,9 @@ checksum = "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
 
 [[package]]
 name = "unicode-segmentation"
-version = "1.13.2"
+version = "1.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9629274872b2bfaf8d66f5f15725007f635594914870f65218920345aa11aa8c"
+checksum = "c6f5d3c3b1bf09027a88a6bc961fc00497d651009560b5463668dc81b0fa87a8"
 
 [[package]]
 name = "unicode-width"
@@ -3571,9 +3571,9 @@ checksum = "1ffae5123b2d3fc086436f8834ae3ab053a283cfac8fe0a0b8eaae044768a4c4"
 
 [[package]]
 name = "yoke"
-version = "0.8.2"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abe8c5fda708d9ca3df187cae8bfb9ceda00dd96231bed36e445a1a48e66f9ca"
+checksum = "709fe23a0424b6a435d82152b1bd3fdfb0833487d5fa90d05d42762a9891fef5"
 dependencies = [
  "stable_deref_trait",
  "yoke-derive",
@@ -3594,18 +3594,18 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.8.49"
+version = "0.8.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bce33a6288fa3f072a8c2c7d0f2fdbb90e28298f0135c1f99b96c3db2efcc60b"
+checksum = "3b065d4f0e55f82fae73202e189638116a87c55ab6b8e6c2721e13dd9d854ad1"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.8.49"
+version = "0.8.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fd425244944f4ab65ccff928e7323354c5a018c75838362fdce749dfad2ee1e"
+checksum = "0b631b19d36a892ab55420c92dbc83ccd79274f25be714855d3074aa71cab639"
 dependencies = [
  "proc-macro2",
  "quote",
