@@ -20,6 +20,8 @@ mod llm;
 mod llm;
 mod banner;
 mod prompt;
+#[cfg(feature = "api")]
+mod token_budget;
 
 use languages::{detect_lang, get_language_from_code, LANGUAGES};
 use error_response::ErrorResponse;
@@ -83,6 +85,21 @@ struct Args {
     #[cfg(feature = "api")]
     #[arg(long, default_value_t = 0)]
     llm_max_tokens: u32,
+
+    /// Dynamic cap: conservative characters-per-token divisor
+    #[cfg(feature = "api")]
+    #[arg(long, default_value_t = 2.0)]
+    llm_chars_per_token: f32,
+
+    /// Dynamic cap: output safety multiple (0 disables the dynamic cap)
+    #[cfg(feature = "api")]
+    #[arg(long, default_value_t = 3.0)]
+    llm_max_tokens_mult: f32,
+
+    /// Dynamic cap: minimum output tokens for tiny inputs
+    #[cfg(feature = "api")]
+    #[arg(long, default_value_t = 64)]
+    llm_max_tokens_floor: u32,
 
     /// HTTP timeout in seconds for LLM API requests (0 = no timeout)
     #[cfg(feature = "api")]
@@ -290,7 +307,16 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
     
     let translated_text = if source != target {
         #[cfg(feature = "api")]
-        { llm.run_prompt(prompt.system, prompt.user).await.unwrap_or(q.clone()) }
+        {
+            let budget_cfg = token_budget::TokenBudgetConfig {
+                chars_per_token: args.llm_chars_per_token,
+                output_mult: args.llm_max_tokens_mult,
+                floor: args.llm_max_tokens_floor,
+                ceiling: if args.llm_max_tokens > 0 { Some(args.llm_max_tokens) } else { None },
+            };
+            let cap = token_budget::dynamic_output_cap(q.chars().count(), &budget_cfg);
+            llm.run_prompt(prompt.system, prompt.user, cap).await.unwrap_or(q.clone())
+        }
         #[cfg(not(feature = "api"))]
         { llm.run_prompt(prompt.system, prompt.user).unwrap_or(q.clone()) }
     }else{
