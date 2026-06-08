@@ -17,27 +17,43 @@ struct ChatMessage {
 }
 
 #[derive(Serialize)]
+struct ChatTemplateKwargs {
+    enable_thinking: bool,
+}
+
+#[derive(Serialize)]
 struct ChatCompletionRequest {
     model: String,
     messages: Vec<ChatMessage>,
     temperature: f32,
     #[serde(skip_serializing_if = "Option::is_none")]
     max_tokens: Option<u32>,
+    chat_template_kwargs: ChatTemplateKwargs,
 }
 
 #[derive(Deserialize)]
 struct ChatCompletionResponse {
     choices: Vec<Choice>,
+    #[serde(default)]
+    usage: Option<Usage>,
 }
 
 #[derive(Deserialize)]
 struct Choice {
     message: ResponseMessage,
+    #[serde(default)]
+    finish_reason: Option<String>,
 }
 
 #[derive(Deserialize)]
 struct ResponseMessage {
     content: String,
+}
+
+#[derive(Deserialize)]
+struct Usage {
+    #[serde(default)]
+    completion_tokens: Option<u32>,
 }
 
 #[derive(Deserialize)]
@@ -52,8 +68,14 @@ struct ModelEntry {
 
 impl LLM {
     pub fn new(url: String, api_key: String, model: String, max_tokens: Option<u32>, timeout_secs: u64) -> Result<Self> {
-        let client = reqwest::Client::builder()
-            .timeout(Duration::from_secs(timeout_secs))
+        // timeout_secs == 0 means "no timeout": reqwest has no timeout by default,
+        // so we only apply one when a positive value is configured. Passing
+        // Duration::from_secs(0) would instead make every request time out instantly.
+        let mut builder = reqwest::Client::builder();
+        if timeout_secs > 0 {
+            builder = builder.timeout(Duration::from_secs(timeout_secs));
+        }
+        let client = builder
             .build()
             .with_context(|| "Failed to build HTTP client")?;
         Ok(LLM { url, api_key, model, max_tokens, client })
@@ -88,8 +110,16 @@ impl LLM {
         Ok(model_id)
     }
 
-    pub async fn run_prompt(&self, system: String, user: String) -> Result<String> {
+    pub async fn run_prompt(
+        &self,
+        system: String,
+        user: String,
+        max_output_tokens: Option<u32>,
+    ) -> Result<String> {
         let endpoint = format!("{}/v1/chat/completions", self.url.trim_end_matches('/'));
+
+        // Dynamic per-request cap when provided, otherwise the static ceiling.
+        let max_tokens = max_output_tokens.or(self.max_tokens);
 
         let request = ChatCompletionRequest {
             model: self.model.clone(),
@@ -97,8 +127,11 @@ impl LLM {
                 ChatMessage { role: "system".to_string(), content: system },
                 ChatMessage { role: "user".to_string(), content: user },
             ],
+            // Translation pipeline invariants — enforced here, not relied on from
+            // the vLLM serve flags or model defaults.
             temperature: 0.0,
-            max_tokens: self.max_tokens,
+            max_tokens,
+            chat_template_kwargs: ChatTemplateKwargs { enable_thinking: false },
         };
 
         let mut req = self.client.post(&endpoint)
@@ -120,9 +153,52 @@ impl LLM {
         let completion: ChatCompletionResponse = response.json().await
             .with_context(|| "Failed to parse LLM API response")?;
 
-        completion.choices.into_iter()
+        let completion_tokens = completion.usage.and_then(|u| u.completion_tokens);
+        let choice = completion.choices.into_iter()
             .next()
-            .map(|c| c.message.content)
-            .ok_or_else(|| anyhow::anyhow!("LLM API returned no choices"))
+            .ok_or_else(|| anyhow::anyhow!("LLM API returned no choices"))?;
+
+        // Truncation safety signal: the cap may have cut a real translation.
+        if choice.finish_reason.as_deref() == Some("length") {
+            eprintln!(
+                "⚠️ LLM stopped at max_tokens cap (max_tokens={:?}, completion_tokens={:?}) — output may be truncated",
+                max_tokens, completion_tokens
+            );
+        }
+
+        Ok(choice.message.content)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn request_enforces_determinism_invariants() {
+        let req = ChatCompletionRequest {
+            model: "m".to_string(),
+            messages: vec![],
+            temperature: 0.0,
+            max_tokens: Some(123),
+            chat_template_kwargs: ChatTemplateKwargs { enable_thinking: false },
+        };
+        let v = serde_json::to_value(&req).unwrap();
+        assert_eq!(v["temperature"], serde_json::json!(0.0));
+        assert_eq!(v["chat_template_kwargs"]["enable_thinking"], serde_json::json!(false));
+        assert_eq!(v["max_tokens"], serde_json::json!(123));
+    }
+
+    #[test]
+    fn max_tokens_omitted_when_none() {
+        let req = ChatCompletionRequest {
+            model: "m".to_string(),
+            messages: vec![],
+            temperature: 0.0,
+            max_tokens: None,
+            chat_template_kwargs: ChatTemplateKwargs { enable_thinking: false },
+        };
+        let v = serde_json::to_value(&req).unwrap();
+        assert!(v.get("max_tokens").is_none());
     }
 }
