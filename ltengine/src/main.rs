@@ -20,6 +20,7 @@ mod llm;
 mod llm;
 mod banner;
 mod prompt;
+mod startup_info;
 #[cfg(feature = "api")]
 mod token_budget;
 
@@ -399,40 +400,44 @@ async fn main() -> std::io::Result<()> {
     let port = args.port;
 
     #[cfg(feature = "local")]
-    let llm = {
+    let (llm, facts) = {
         let model_path = load_model(&args.model, &args.model_file).unwrap_or_else(|err| {
             eprintln!("Failed to load model: {}", err);
             std::process::exit(1);
         });
-        println!("Loading model: {}", model_path.display());
-        Arc::new(llm::LLM::new(model_path, args.cpu, args.verbose).unwrap_or_else(|err| {
+        let facts = startup_info::RuntimeFacts { model_path: model_path.clone() };
+        let llm = Arc::new(llm::LLM::new(model_path, args.cpu, args.verbose).unwrap_or_else(|err| {
             eprintln!("Failed to initialize LLM: {}", err);
             std::process::exit(1);
-        }))
+        }));
+        (llm, facts)
     };
 
     #[cfg(feature = "api")]
-    let llm = {
-        println!("Using external LLM API: {}", args.llm_url);
+    let (llm, facts) = {
         let max_tokens = if args.llm_max_tokens > 0 { Some(args.llm_max_tokens) } else { None };
         let timeout_secs = if args.llm_timeout > 0 { args.llm_timeout } else { 0 };
         let mut llm_instance = llm::LLM::new(args.llm_url.clone(), args.llm_api_key.clone(), args.llm_model.clone(), max_tokens, timeout_secs).unwrap_or_else(|err| {
             eprintln!("Failed to initialize LLM API client: {}", err);
             std::process::exit(1);
         });
-        if args.llm_model.is_empty() {
+        let (resolved_model, model_resolved) = if args.llm_model.is_empty() {
             match llm_instance.resolve_model().await {
-                Ok(model_name) => println!("Resolved model: {}", model_name),
+                Ok(model_name) => (model_name, true),
                 Err(err) => {
                     eprintln!("Failed to resolve model from server: {}", err);
                     std::process::exit(1);
                 }
             }
-        }
-        Arc::new(llm_instance)
+        } else {
+            (args.llm_model.clone(), false)
+        };
+        let facts = startup_info::RuntimeFacts { resolved_model, model_resolved };
+        (Arc::new(llm_instance), facts)
     };
 
     print_banner();
+    startup_info::print(&args, &facts);
 
     let prometheus = PrometheusMetricsBuilder::new("ltengine")
         .endpoint("/metrics")
@@ -459,7 +464,7 @@ async fn main() -> std::io::Result<()> {
     .bind((host.clone(), port))?
     .run();
 
-    println!("Running on: http://{}:{}", host, port);
+    println!("Listening on http://{}:{}", host, port);
 
     return server.await;
 }
