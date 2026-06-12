@@ -3,21 +3,3 @@ resolver = "2"
 members = [
     "ltengine",
 ]
-
-[workspace.dependencies]
-# core llama-cpp-2 deps
-thiserror = "2"
-tracing = "0.1"
-tracing-core = "0.1"
-bindgen = "0.72.1"
-cc = "1.2.49"
-encoding_rs = "0.8.35"
-hf-hub = "0.5.0"
-tracing-subscriber = { version = "0.3", features = ["json"] }
-
-[workspace.lints.rust]
-missing_docs = { level = "warn" }
-missing_debug_implementations = { level = "warn" }
-
-[workspace.lints.clippy]
-pedantic = { level = "warn" }

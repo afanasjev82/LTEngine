@@ -1,9 +1,8 @@
-//! Human-readable startup banner: build, runtime, token-budget, system and GPU
-//! info rendered as bordered tables.
+//! Human-readable startup banner: build, runtime and token-budget info rendered
+//! as bordered tables.
 //!
 //! Build-time values (`LTE_*`) are injected by `build.rs`. The module only
-//! formats already-validated data, so it introduces no fallible paths; hardware
-//! probes (`sysinfo`, `wgpu`) degrade gracefully and never panic.
+//! formats already-validated data, so it introduces no fallible paths.
 
 use comfy_table::{Cell, Table};
 
@@ -31,9 +30,6 @@ pub fn print(args: &Args, facts: &RuntimeFacts) {
     println!("{}", runtime_table(args, facts));
     #[cfg(feature = "api")]
     println!("{}", token_budget_table(args));
-    println!("{}", system_table());
-    #[cfg(feature = "local")]
-    println!("{}", gpu_table());
 }
 
 /// A table with the box-drawing preset forced on, so output is consistent in
@@ -178,98 +174,6 @@ fn token_budget_table(args: &Args) -> Table {
     t
 }
 
-/// Bytes → human-readable GiB/MiB string. Pure — unit-tested.
-fn format_bytes(bytes: u64) -> String {
-    const GIB: f64 = 1024.0 * 1024.0 * 1024.0;
-    const MIB: f64 = 1024.0 * 1024.0;
-    let b = bytes as f64;
-    if b >= GIB {
-        format!("{:.1} GiB", b / GIB)
-    } else {
-        format!("{:.1} MiB", b / MIB)
-    }
-}
-
-fn system_table() -> Table {
-    use sysinfo::System;
-
-    let mut sys = System::new();
-    sys.refresh_memory();
-    sys.refresh_cpu_all();
-
-    let mut t = section("System");
-
-    let name = System::name().unwrap_or_else(|| "unknown".to_string());
-    let os_ver = System::os_version().unwrap_or_default();
-    let kernel = System::kernel_version()
-        .map(|k| format!(" (kernel {k})"))
-        .unwrap_or_default();
-    t.add_row(vec![
-        Cell::new("OS"),
-        Cell::new(format!("{name} {os_ver}{kernel}").trim().to_string()),
-    ]);
-    t.add_row(vec![
-        Cell::new("Host"),
-        Cell::new(System::host_name().unwrap_or_else(|| "unknown".to_string())),
-    ]);
-
-    let cpu = sys
-        .cpus()
-        .first()
-        .map(|c| c.brand().trim().to_string())
-        .filter(|s| !s.is_empty())
-        .unwrap_or_else(|| "unknown".to_string());
-    t.add_row(vec![Cell::new("CPU"), Cell::new(cpu)]);
-
-    let physical = sys
-        .physical_core_count()
-        .map(|n| n.to_string())
-        .unwrap_or_else(|| "?".to_string());
-    let logical = sys.cpus().len();
-    t.add_row(vec![
-        Cell::new("Cores"),
-        Cell::new(format!("{physical} physical / {logical} logical")),
-    ]);
-
-    t.add_row(vec![
-        Cell::new("Memory"),
-        Cell::new(format!(
-            "{} total, {} available",
-            format_bytes(sys.total_memory()),
-            format_bytes(sys.available_memory())
-        )),
-    ]);
-    t
-}
-
-#[cfg(feature = "local")]
-fn gpu_table() -> Table {
-    let mut t = section("GPU");
-    // Note: `section` already applies the box-drawing preset.
-
-    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-        backends: wgpu::Backends::all(),
-        ..Default::default()
-    });
-    let adapters = instance.enumerate_adapters(wgpu::Backends::all());
-
-    if adapters.is_empty() {
-        t.add_row(vec![Cell::new("-"), Cell::new("none detected")]);
-    } else {
-        for (i, adapter) in adapters.iter().enumerate() {
-            let info = adapter.get_info();
-            t.add_row(vec![
-                Cell::new(i),
-                Cell::new(format!(
-                    "{} ({:?}, {:?})",
-                    info.name, info.backend, info.device_type
-                )),
-            ]);
-        }
-    }
-    t
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -293,14 +197,6 @@ mod tests {
         assert_eq!(secret_state(""), "none");
         assert_eq!(secret_state("   "), "none");
         assert_eq!(secret_state("hunter2"), "set");
-    }
-
-    #[test]
-    fn format_bytes_picks_units() {
-        assert_eq!(format_bytes(0), "0.0 MiB");
-        assert_eq!(format_bytes(512 * 1024 * 1024), "512.0 MiB");
-        assert_eq!(format_bytes(1024 * 1024 * 1024), "1.0 GiB");
-        assert_eq!(format_bytes(3 * 1024 * 1024 * 1024), "3.0 GiB");
     }
 
     #[cfg(feature = "api")]
