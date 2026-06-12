@@ -1,10 +1,8 @@
 //! Human-readable startup banner: build, runtime and token-budget info rendered
-//! as bordered tables.
+//! as compact, aligned key/value sections.
 //!
 //! Build-time values (`LTE_*`) are injected by `build.rs`. The module only
 //! formats already-validated data, so it introduces no fallible paths.
-
-use comfy_table::{Cell, Table};
 
 use crate::Args;
 #[cfg(feature = "api")]
@@ -26,25 +24,40 @@ pub struct RuntimeFacts {
 
 /// Print the full startup summary (call after `print_banner`).
 pub fn print(args: &Args, facts: &RuntimeFacts) {
-    println!("{}", build_table());
-    println!("{}", runtime_table(args, facts));
+    let profile = if cfg!(debug_assertions) { "debug" } else { "release" };
+    let title = format!(
+        "LTEngine {} · {} · {profile}",
+        env!("CARGO_PKG_VERSION"),
+        feature_list().join(", "),
+    );
+    println!("{title}");
+    println!("{}", "─".repeat(title.chars().count()));
+
+    println!();
+    print!("{}", render_section("Build", &build_rows()));
+    println!();
+    print!("{}", render_section("Runtime", &runtime_rows(args, facts)));
+
     #[cfg(feature = "api")]
-    println!("{}", token_budget_table(args));
+    {
+        let (enabled, rows) = token_budget_rows(&token_budget_config(args));
+        let state = if enabled { "ENABLED" } else { "DISABLED" };
+        println!();
+        print!("{}", render_section(&format!("Token budget  {state}"), &rows));
+    }
+    println!();
 }
 
-/// A table with the box-drawing preset forced on, so output is consistent in
-/// Docker logs regardless of TTY detection.
-fn new_table() -> Table {
-    let mut t = Table::new();
-    t.load_preset(comfy_table::presets::UTF8_FULL);
-    t
-}
-
-/// Two-column table with a section header in the first cell.
-fn section(title: &str) -> Table {
-    let mut t = new_table();
-    t.set_header(vec![Cell::new(title), Cell::new("")]);
-    t
+/// Render a titled section: the title on its own line, then each row indented
+/// two spaces with the label column padded so all values line up. The returned
+/// string ends in a newline.
+fn render_section(title: &str, rows: &[(&str, String)]) -> String {
+    let width = rows.iter().map(|(k, _)| k.chars().count()).max().unwrap_or(0);
+    let mut out = format!("{title}\n");
+    for (k, v) in rows {
+        out.push_str(&format!("  {k:<width$}  {v}\n"));
+    }
+    out
 }
 
 /// Compile-time enabled Cargo features, in display order.
@@ -68,19 +81,20 @@ fn feature_list() -> Vec<&'static str> {
     v
 }
 
-fn build_table() -> Table {
-    let mut t = section("Build");
-    t.add_row(vec![Cell::new("Version"), Cell::new(env!("CARGO_PKG_VERSION"))]);
-    let profile = if cfg!(debug_assertions) { "debug" } else { "release" };
-    t.add_row(vec![Cell::new("Profile"), Cell::new(profile)]);
-    t.add_row(vec![Cell::new("Features"), Cell::new(feature_list().join(", "))]);
-    t.add_row(vec![
-        Cell::new("Git"),
-        Cell::new(format!("{} ({})", env!("LTE_GIT_SHA"), env!("LTE_GIT_BRANCH"))),
-    ]);
-    t.add_row(vec![Cell::new("Built"), Cell::new(env!("LTE_BUILD_TIME"))]);
-    t.add_row(vec![Cell::new("Rustc"), Cell::new(env!("LTE_RUSTC"))]);
-    t
+fn build_rows() -> Vec<(&'static str, String)> {
+    vec![
+        (
+            "git",
+            format!("{} ({})", env!("LTE_GIT_SHA"), env!("LTE_GIT_BRANCH")),
+        ),
+        ("built", env!("LTE_BUILD_TIME").to_string()),
+        // `LTE_RUSTC` is the raw `rustc --version` line ("rustc 1.96.0 (…)");
+        // drop the leading word so it doesn't read "rustc  rustc 1.96.0".
+        (
+            "rustc",
+            env!("LTE_RUSTC").trim_start_matches("rustc ").to_string(),
+        ),
+    ]
 }
 
 /// `"set"`/`"none"` — never echoes secret values.
@@ -89,41 +103,40 @@ fn secret_state(s: &str) -> &'static str {
 }
 
 #[cfg(feature = "api")]
-fn runtime_table(args: &Args, facts: &RuntimeFacts) -> Table {
-    let mut t = section("Runtime");
-    t.add_row(vec![Cell::new("Mode"), Cell::new("api")]);
-    t.add_row(vec![Cell::new("LLM URL"), Cell::new(&args.llm_url)]);
+fn runtime_rows(args: &Args, facts: &RuntimeFacts) -> Vec<(&'static str, String)> {
     let model = if facts.model_resolved {
         format!("{} (resolved)", facts.resolved_model)
     } else {
         facts.resolved_model.clone()
     };
-    t.add_row(vec![Cell::new("LLM model"), Cell::new(model)]);
-    t.add_row(vec![Cell::new("LLM API key"), Cell::new(secret_state(&args.llm_api_key))]);
-    t.add_row(vec![Cell::new("Server auth"), Cell::new(secret_state(&args.api_key))]);
-    t.add_row(vec![Cell::new("Bind"), Cell::new(format!("{}:{}", args.host, args.port))]);
-    t.add_row(vec![Cell::new("Char limit"), Cell::new(args.char_limit)]);
     let timeout = if args.llm_timeout > 0 {
         format!("{}s", args.llm_timeout)
     } else {
         "none".to_string()
     };
-    t.add_row(vec![Cell::new("LLM timeout"), Cell::new(timeout)]);
-    t
+    vec![
+        ("mode", "api".to_string()),
+        ("llm url", args.llm_url.clone()),
+        ("llm model", model),
+        ("llm api key", secret_state(&args.llm_api_key).to_string()),
+        ("server auth", secret_state(&args.api_key).to_string()),
+        ("bind", format!("{}:{}", args.host, args.port)),
+        ("char limit", args.char_limit.to_string()),
+        ("llm timeout", timeout),
+    ]
 }
 
 #[cfg(feature = "local")]
-fn runtime_table(args: &Args, facts: &RuntimeFacts) -> Table {
-    let mut t = section("Runtime");
-    t.add_row(vec![Cell::new("Mode"), Cell::new("local")]);
-    t.add_row(vec![Cell::new("Model"), Cell::new(&args.model)]);
-    t.add_row(vec![Cell::new("Model path"), Cell::new(facts.model_path.display())]);
-    let device = if args.cpu { "cpu" } else { "gpu" };
-    t.add_row(vec![Cell::new("Device"), Cell::new(device)]);
-    t.add_row(vec![Cell::new("Server auth"), Cell::new(secret_state(&args.api_key))]);
-    t.add_row(vec![Cell::new("Bind"), Cell::new(format!("{}:{}", args.host, args.port))]);
-    t.add_row(vec![Cell::new("Char limit"), Cell::new(args.char_limit)]);
-    t
+fn runtime_rows(args: &Args, facts: &RuntimeFacts) -> Vec<(&'static str, String)> {
+    vec![
+        ("mode", "local".to_string()),
+        ("model", args.model.clone()),
+        ("model path", facts.model_path.display().to_string()),
+        ("device", if args.cpu { "cpu" } else { "gpu" }.to_string()),
+        ("server auth", secret_state(&args.api_key).to_string()),
+        ("bind", format!("{}:{}", args.host, args.port)),
+        ("char limit", args.char_limit.to_string()),
+    ]
 }
 
 #[cfg(feature = "api")]
@@ -140,14 +153,14 @@ fn token_budget_config(args: &Args) -> TokenBudgetConfig {
     }
 }
 
-/// `(enabled, rows)` for the token-budget table. Pure — unit-tested.
+/// `(enabled, rows)` for the token-budget section. Pure — unit-tested.
 /// "Enabled" mirrors `dynamic_output_cap`'s own gate.
 #[cfg(feature = "api")]
 fn token_budget_rows(cfg: &TokenBudgetConfig) -> (bool, Vec<(&'static str, String)>) {
     let enabled = cfg.output_mult > 0.0 && cfg.chars_per_token > 0.0;
     let rows = vec![
         ("chars/token", format!("{}", cfg.chars_per_token)),
-        ("mult", format!("x{}", cfg.output_mult)),
+        ("mult", format!("×{}", cfg.output_mult)),
         ("floor", cfg.floor.to_string()),
         (
             "ceiling",
@@ -157,21 +170,6 @@ fn token_budget_rows(cfg: &TokenBudgetConfig) -> (bool, Vec<(&'static str, Strin
         ),
     ];
     (enabled, rows)
-}
-
-#[cfg(feature = "api")]
-fn token_budget_table(args: &Args) -> Table {
-    let cfg = token_budget_config(args);
-    let (enabled, rows) = token_budget_rows(&cfg);
-    let mut t = new_table();
-    t.set_header(vec![
-        Cell::new("Token budget (dynamic cap)"),
-        Cell::new(if enabled { "ENABLED" } else { "DISABLED" }),
-    ]);
-    for (k, v) in rows {
-        t.add_row(vec![Cell::new(k), Cell::new(v)]);
-    }
-    t
 }
 
 #[cfg(test)]
@@ -197,6 +195,19 @@ mod tests {
         assert_eq!(secret_state(""), "none");
         assert_eq!(secret_state("   "), "none");
         assert_eq!(secret_state("hunter2"), "set");
+    }
+
+    #[test]
+    fn render_section_aligns_values() {
+        let rows = vec![
+            ("a", "1".to_string()),
+            ("long", "2".to_string()),
+        ];
+        // Labels padded to the widest ("long" = 4), two-space indent + gap.
+        assert_eq!(
+            render_section("S", &rows),
+            "S\n  a     1\n  long  2\n",
+        );
     }
 
     #[cfg(feature = "api")]
