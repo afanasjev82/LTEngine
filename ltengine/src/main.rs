@@ -267,6 +267,25 @@ fn check_format(format: &str) -> Result<bool, ErrorResponse> {
     }
 }
 
+/// Per-request output-token cap. The dynamic cap is fully opt-in: it applies
+/// only when all three of `--llm-max-tokens`, `--llm-chars-per-token`, and
+/// `--llm-max-tokens-mult` are > 0. With `--llm-max-tokens 0` nothing is capped
+/// and `max_tokens` is omitted from the request.
+#[cfg(feature = "api")]
+fn output_cap(input_chars: usize, args: &Args) -> Option<u32> {
+    if args.llm_max_tokens == 0 {
+        return None; // no ceiling => no cap at all
+    }
+    let cfg = token_budget::TokenBudgetConfig {
+        chars_per_token: args.llm_chars_per_token,
+        output_mult: args.llm_max_tokens_mult,
+        floor: args.llm_max_tokens_floor,
+        ceiling: Some(args.llm_max_tokens), // always Some here (> 0)
+    };
+    // Returns None unless chars_per_token > 0 && output_mult > 0.
+    token_budget::dynamic_output_cap(input_chars, &cfg)
+}
+
 #[post("/translate")]
 async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<Args>>, llm: actix_web::web::Data<Arc<llm::LLM>>) -> Result<HttpResponse, ErrorResponse> {
     let body = parse_payload(req, payload).await?;
@@ -309,13 +328,7 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
     let translated_text = if source != target {
         #[cfg(feature = "api")]
         {
-            let budget_cfg = token_budget::TokenBudgetConfig {
-                chars_per_token: args.llm_chars_per_token,
-                output_mult: args.llm_max_tokens_mult,
-                floor: args.llm_max_tokens_floor,
-                ceiling: if args.llm_max_tokens > 0 { Some(args.llm_max_tokens) } else { None },
-            };
-            let cap = token_budget::dynamic_output_cap(q.chars().count(), &budget_cfg);
+            let cap = output_cap(q.chars().count(), &args);
             llm.run_prompt(prompt.system, prompt.user, cap).await.unwrap_or(q.clone())
         }
         #[cfg(not(feature = "api"))]
@@ -467,4 +480,62 @@ async fn main() -> std::io::Result<()> {
     println!("Listening on http://{}:{}", host, port);
 
     return server.await;
+}
+
+#[cfg(all(test, feature = "api"))]
+mod tests {
+    use super::*;
+    use clap::Parser;
+
+    /// Build an `Args` from CLI tokens; `--llm-url` is required.
+    fn args_with(extra: &[&str]) -> Args {
+        let mut argv = vec!["ltengine", "--llm-url", "http://localhost:8080"];
+        argv.extend_from_slice(extra);
+        Args::parse_from(argv)
+    }
+
+    #[test]
+    fn output_cap_none_without_ceiling() {
+        // --llm-max-tokens 0 => no cap, even with positive estimator knobs.
+        let args = args_with(&[
+            "--llm-max-tokens", "0",
+            "--llm-chars-per-token", "2",
+            "--llm-max-tokens-mult", "3",
+        ]);
+        assert_eq!(output_cap(1000, &args), None);
+    }
+
+    #[test]
+    fn output_cap_none_when_mult_zero() {
+        // Ceiling set but mult 0 => dynamic disabled; handler falls back to static ceiling.
+        let args = args_with(&[
+            "--llm-max-tokens", "256",
+            "--llm-chars-per-token", "2",
+            "--llm-max-tokens-mult", "0",
+        ]);
+        assert_eq!(output_cap(1000, &args), None);
+    }
+
+    #[test]
+    fn output_cap_clamped_to_ceiling_when_all_positive() {
+        let args = args_with(&[
+            "--llm-max-tokens", "256",
+            "--llm-chars-per-token", "2",
+            "--llm-max-tokens-mult", "3",
+        ]);
+        // 1000/2 = 500, *3 = 1500, clamped to ceiling 256.
+        assert_eq!(output_cap(1000, &args), Some(256));
+    }
+
+    #[test]
+    fn output_cap_uses_floor_for_tiny_input() {
+        let args = args_with(&[
+            "--llm-max-tokens", "4096",
+            "--llm-chars-per-token", "2",
+            "--llm-max-tokens-mult", "3",
+            "--llm-max-tokens-floor", "64",
+        ]);
+        // 10/2 = 5, *3 = 15, raised to floor 64.
+        assert_eq!(output_cap(10, &args), Some(64));
+    }
 }
