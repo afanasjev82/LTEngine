@@ -19,7 +19,7 @@ target/
 build/
 .vscode/
 .claude/
-docs/internal/
+docs/
 
 # Understand-anything
 .understand-anything/intermediate/
