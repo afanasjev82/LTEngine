@@ -14,6 +14,7 @@ mod models;
 mod llm;
 mod banner;
 mod prompt;
+mod startup_info;
 
 use languages::{detect_lang, get_language_from_code, LANGUAGES};
 use error_response::ErrorResponse;
@@ -341,12 +342,15 @@ async fn main() -> std::io::Result<()> {
     
     println!("Loading model: {}", model_path.display());
 
+    let facts = startup_info::RuntimeFacts { model_path: model_path.clone() };
+
     let llm = Arc::new(llm::LLM::new(model_path, args.cpu, args.verbose).unwrap_or_else(|err| {
         eprintln!("Failed to initialize LLM: {}", err);
         std::process::exit(1);
     }));
 
     print_banner();
+    startup_info::print(&args, &facts);
 
     let server = HttpServer::new(move || {
         let generated = generate();

@@ -1,6 +1,6 @@
 [package]
 name = "ltengine"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 
 [dependencies]
@@ -24,3 +24,4 @@ vulkan = ["llama-cpp-bindings/vulkan"]
 
 [build-dependencies]
 static-files = "0.2.5"
+time = { version = "0.3", features = ["formatting"] }
