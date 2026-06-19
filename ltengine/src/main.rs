@@ -331,10 +331,18 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
         #[cfg(feature = "api")]
         {
             let cap = output_cap(q.chars().count(), &args);
-            llm.run_prompt(prompt.system, prompt.user, cap).await.unwrap_or(q.clone())
+            llm.run_prompt(prompt.system, prompt.user, cap).await.map_err(|e| {
+                let status = e.downcast_ref::<llm::ApiError>().map_or(500, llm::ApiError::http_status);
+                ErrorResponse { error: e.to_string(), status }
+            })?
         }
         #[cfg(not(feature = "api"))]
-        { llm.run_prompt(prompt.system, prompt.user).unwrap_or(q.clone()) }
+        {
+            llm.run_prompt(prompt.system, prompt.user).map_err(|e| {
+                let status = if matches!(e.downcast_ref::<llm::LLMError>(), Some(llm::LLMError::Busy)) { 503 } else { 500 };
+                ErrorResponse { error: e.to_string(), status }
+            })?
+        }
     }else{
         q.clone()
     };

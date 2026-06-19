@@ -1781,10 +1781,12 @@ dependencies = [
  "hf-hub",
  "llama-cpp-bindings",
  "once_cell",
+ "parking_lot",
  "reqwest 0.13.4",
  "serde",
  "serde_json",
  "static-files 0.2.5",
+ "thiserror",
  "time",
  "whatlang",
 ]

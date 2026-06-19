@@ -2,6 +2,33 @@ use anyhow::{Result, Context};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
+#[derive(thiserror::Error, Debug)]
+pub enum ApiError {
+    #[error("LLM API request timed out")]
+    Timeout,
+    #[error("LLM API unreachable: {0}")]
+    Unreachable(String),
+    #[error("LLM API returned status {status}: {body}")]
+    Remote { status: u16, body: String },
+    #[error("LLM API response parse error: {0}")]
+    Parse(String),
+    #[error("LLM API returned no choices")]
+    NoChoices,
+}
+
+impl ApiError {
+    /// Map an API failure to an HTTP status. Transient/retryable (timeout,
+    /// unreachable, gateway/unavailable/timeout/too-many-requests) -> 503;
+    /// everything else (other remote status, parse, empty) -> 500.
+    pub fn http_status(&self) -> u16 {
+        match self {
+            ApiError::Timeout | ApiError::Unreachable(_) => 503,
+            ApiError::Remote { status, .. } if matches!(*status, 502 | 503 | 504 | 429) => 503,
+            _ => 500,
+        }
+    }
+}
+
 pub struct LLM {
     url: String,
     api_key: String,
@@ -141,22 +168,23 @@ impl LLM {
             req = req.bearer_auth(&self.api_key);
         }
 
-        let response = req.send().await
-            .with_context(|| format!("Failed to send request to {}", endpoint))?;
+        let response = req.send().await.map_err(|e| {
+            if e.is_timeout() { ApiError::Timeout } else { ApiError::Unreachable(e.to_string()) }
+        })?;
 
         let status = response.status();
         if !status.is_success() {
             let body = response.text().await.unwrap_or_default();
-            anyhow::bail!("LLM API returned status {}: {}", status, body);
+            return Err(ApiError::Remote { status: status.as_u16(), body }.into());
         }
 
         let completion: ChatCompletionResponse = response.json().await
-            .with_context(|| "Failed to parse LLM API response")?;
+            .map_err(|e| ApiError::Parse(e.to_string()))?;
 
         let completion_tokens = completion.usage.and_then(|u| u.completion_tokens);
         let choice = completion.choices.into_iter()
             .next()
-            .ok_or_else(|| anyhow::anyhow!("LLM API returned no choices"))?;
+            .ok_or(ApiError::NoChoices)?;
 
         // Truncation safety signal: the cap may have cut a real translation.
         if choice.finish_reason.as_deref() == Some("length") {
@@ -200,5 +228,24 @@ mod tests {
         };
         let v = serde_json::to_value(&req).unwrap();
         assert!(v.get("max_tokens").is_none());
+    }
+
+    #[test]
+    fn api_error_status_maps_transient_to_503() {
+        assert_eq!(ApiError::Timeout.http_status(), 503);
+        assert_eq!(ApiError::Unreachable("x".into()).http_status(), 503);
+        assert_eq!(ApiError::Remote { status: 502, body: String::new() }.http_status(), 503);
+        assert_eq!(ApiError::Remote { status: 503, body: String::new() }.http_status(), 503);
+        assert_eq!(ApiError::Remote { status: 504, body: String::new() }.http_status(), 503);
+        assert_eq!(ApiError::Remote { status: 429, body: String::new() }.http_status(), 503);
+    }
+
+    #[test]
+    fn api_error_status_maps_permanent_to_500() {
+        assert_eq!(ApiError::Remote { status: 400, body: String::new() }.http_status(), 500);
+        assert_eq!(ApiError::Remote { status: 401, body: String::new() }.http_status(), 500);
+        assert_eq!(ApiError::Remote { status: 500, body: String::new() }.http_status(), 500);
+        assert_eq!(ApiError::Parse("x".into()).http_status(), 500);
+        assert_eq!(ApiError::NoChoices.http_status(), 500);
     }
 }
