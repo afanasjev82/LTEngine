@@ -157,7 +157,7 @@ fn token_budget_config(args: &Args) -> TokenBudgetConfig {
 /// "Enabled" mirrors `dynamic_output_cap`'s own gate.
 #[cfg(feature = "api")]
 fn token_budget_rows(cfg: &TokenBudgetConfig) -> (bool, Vec<(&'static str, String)>) {
-    let enabled = cfg.output_mult > 0.0 && cfg.chars_per_token > 0.0;
+    let enabled = cfg.output_mult > 0.0 && cfg.chars_per_token > 0.0 && cfg.ceiling.is_some();
     let rows = vec![
         ("chars/token", format!("{}", cfg.chars_per_token)),
         ("mult", format!("×{}", cfg.output_mult)),
@@ -257,7 +257,10 @@ mod tests {
             floor: 64,
             ceiling: None,
         };
-        let (_, rows) = token_budget_rows(&cfg);
+        let (enabled, rows) = token_budget_rows(&cfg);
+        // No ceiling (--llm-max-tokens 0) => dynamic cap disabled, even with
+        // positive estimator knobs.
+        assert!(!enabled);
         assert_eq!(rows[3], ("ceiling", "none".to_string()));
     }
 }
