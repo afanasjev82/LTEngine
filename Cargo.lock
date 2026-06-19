@@ -1760,9 +1760,11 @@ dependencies = [
  "hf-hub",
  "llama-cpp-bindings",
  "once_cell",
+ "parking_lot",
  "serde",
  "serde_json",
  "static-files 0.2.5",
+ "thiserror",
  "time",
  "whatlang",
 ]

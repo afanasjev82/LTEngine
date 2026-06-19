@@ -11,13 +11,21 @@ use llama_cpp_bindings::sampled_token::SampledToken;
 use llama_cpp_bindings::{send_logs_to_log, LogOptions};
 use std::num::NonZeroU32;
 use std::path::PathBuf;
-use std::sync::Mutex;
+use parking_lot::Mutex;
 use anyhow::{Result, Context};
+
+#[derive(thiserror::Error, Debug)]
+pub enum LLMError {
+    #[error("LLM busy")]
+    Busy,
+    #[error("model produced empty output")]
+    EmptyOutput,
+}
 
 pub struct LLM {
     backend: LlamaBackend,
     model: LlamaModel,
-    prompt_lock: Mutex<bool>
+    prompt_lock: Mutex<()>
 }
 
 pub struct LLMContext<'a>{
@@ -45,7 +53,7 @@ impl LLM {
         let model = LlamaModel::load_from_file(&backend, model_path, &model_params)
             .with_context(|| "Unable to load model")?;
         
-        Ok(LLM { backend, model, prompt_lock: Mutex::new(true) })
+        Ok(LLM { backend, model, prompt_lock: Mutex::new(()) })
     }
 
     pub fn create_context(&self, ctx_size: i32) -> Result<LLMContext<'_>>{
@@ -85,7 +93,8 @@ impl LLM {
             // this might need to be investigated and fixed. For now we lock and process requests
             // one at a time.
             // TODO: consider locking with a timeout: https://docs.rs/parking_lot/latest/parking_lot/type.Mutex.html#method.try_lock_for
-            let _lock = self.prompt_lock.lock();
+            let _lock = self.prompt_lock.try_lock_for(std::time::Duration::from_secs(120))
+                .ok_or(LLMError::Busy)?;
             ctx.process(tokens_list)
         }
     }
