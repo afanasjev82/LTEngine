@@ -88,12 +88,12 @@ cargo build --no-default-features --features api --release
 | `--llm-api-key` | _(none)_ | Bearer token sent to the server |
 | `--llm-model` | _(auto)_ | Model name; when omitted it is auto-resolved from `GET /v1/models` |
 | `--llm-timeout` | `120` | HTTP timeout in seconds (`0` = no timeout) |
-| `--llm-max-tokens` | `0` | Static output-token ceiling (`0` = no ceiling) |
-| `--llm-chars-per-token` | `2.0` | Dynamic cap: conservative characters-per-token estimate |
-| `--llm-max-tokens-mult` | `3.0` | Dynamic cap: output budget multiplier (`0` disables the dynamic cap) |
+| `--llm-max-tokens` | `0` | Output-token ceiling and cap master switch (`0` = no cap; the dynamic cap requires this `> 0`) |
+| `--llm-chars-per-token` | `0` | Dynamic cap (opt-in): characters-per-token estimate; cap requires this `> 0` |
+| `--llm-max-tokens-mult` | `0` | Dynamic cap (opt-in): output budget multiplier; cap requires this `> 0` |
 | `--llm-max-tokens-floor` | `64` | Dynamic cap: minimum output budget for tiny inputs |
 
-Requests are deterministic: `temperature 0.0` and `chat_template_kwargs.enable_thinking = false` are always sent. Output tokens are capped dynamically per request: `ceil(ceil(input_chars / chars-per-token) × mult)`, never below the floor and never above `--llm-max-tokens` (when set). Set `--llm-max-tokens-mult 0` (or `--llm-chars-per-token 0`) to disable the dynamic cap and use only the static ceiling, which is omitted from requests when `0`. A warning is logged when a response is truncated at the cap (`finish_reason = "length"`).
+Requests are deterministic: `temperature 0.0` and `chat_template_kwargs.enable_thinking = false` are always sent. The dynamic output-token cap is **opt-in**: it applies only when all three of `--llm-max-tokens`, `--llm-chars-per-token`, and `--llm-max-tokens-mult` are `> 0`. When enabled, output tokens are capped per request at `ceil(ceil(input_chars / chars-per-token) × mult)`, never below `--llm-max-tokens-floor` and never above `--llm-max-tokens`. By default all three are `0`, so no cap is applied and `max_tokens` is omitted from requests. Setting only `--llm-max-tokens N` (with the estimator knobs at `0`) applies a flat static ceiling of `N`. A warning is logged when a response is truncated at the cap (`finish_reason = "length"`).
 
 ## Models
 
