@@ -87,14 +87,16 @@ struct Args {
     #[arg(long, default_value_t = 0)]
     llm_max_tokens: u32,
 
-    /// Dynamic cap: conservative characters-per-token divisor
+    /// Dynamic cap (opt-in): characters-per-token divisor. The cap is active only
+    /// when this, --llm-max-tokens, and --llm-max-tokens-mult are all > 0.
     #[cfg(feature = "api")]
-    #[arg(long, default_value_t = 2.0)]
+    #[arg(long, default_value_t = 0.0)]
     llm_chars_per_token: f32,
 
-    /// Dynamic cap: output safety multiple (0 disables the dynamic cap)
+    /// Dynamic cap (opt-in): output safety multiple. The cap is active only when
+    /// this, --llm-max-tokens, and --llm-chars-per-token are all > 0.
     #[cfg(feature = "api")]
-    #[arg(long, default_value_t = 3.0)]
+    #[arg(long, default_value_t = 0.0)]
     llm_max_tokens_mult: f32,
 
     /// Dynamic cap: minimum output tokens for tiny inputs
@@ -537,5 +539,15 @@ mod tests {
         ]);
         // 10/2 = 5, *3 = 15, raised to floor 64.
         assert_eq!(output_cap(10, &args), Some(64));
+    }
+
+    #[test]
+    fn dynamic_cap_off_by_default() {
+        let args = args_with(&[]);
+        assert_eq!(args.llm_max_tokens, 0);
+        assert_eq!(args.llm_chars_per_token, 0.0);
+        assert_eq!(args.llm_max_tokens_mult, 0.0);
+        // With nothing configured, no cap is ever computed.
+        assert_eq!(output_cap(100_000, &args), None);
     }
 }
