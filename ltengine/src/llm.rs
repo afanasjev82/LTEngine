@@ -213,16 +213,30 @@ impl LLM {
     }
 
     pub fn run_prompt(&self, system: String, user: String) -> Result<String>{
-        let tmpl = self.model.chat_template(None)?;
-        let llm_input = self.model.apply_chat_template(&tmpl, &[
-            LlamaChatMessage::new("system".to_string(), system)?,
-            LlamaChatMessage::new("user".to_string(), user)?
-        ], true)?;
+        // Gemma is single-turn: fold the system instructions into the user turn
+        // (Gemma's chat template has no dedicated `system` role).
+        let messages = [
+            LlamaChatMessage::new("user".to_string(), format!("{system}\n\n{user}"))
+                .context("Failed to build chat message")?
+        ];
+
+        // Use the model's embedded chat template; on failure fall back to the
+        // hardcoded Gemma format (and warn) so translation still works.
+        let llm_input = match self.model
+            .chat_template(None)
+            .ok()
+            .and_then(|tmpl| self.model.apply_chat_template(&tmpl, &messages, true).ok())
+        {
+            Some(s) => s,
+            None => {
+                eprintln!("ltengine: apply_chat_template failed: using hardcoded Gemma format");
+                format!("<start_of_turn>user\n{system}\n\n{user}<end_of_turn>\n<start_of_turn>model\n")
+            }
+        };
 
         let tokens_list = self.model
-            .str_to_token(&llm_input
-            , AddBos::Always)
-            .with_context(|| format!("Failed to tokenize {llm_input}"))?;
+            .str_to_token(&llm_input, AddBos::Always)
+            .with_context(|| "Failed to tokenize prompt")?;
         // for token in &tokens_list {
         //     eprint!("{} {} | ", self.model.token_to_str(*token, Special::Tokenize)?, token);
         // }
@@ -234,6 +248,22 @@ impl LLM {
         let mut ctx = self.create_context(ctx_size)?;
         ctx.process(tokens_list)
     }
+}
+
+/// Clean Gemma model output: strip Gemma 4 thinking tokens, drop literal
+/// `<end_of_turn>`, and trim. Result may be empty (caller decides).
+fn strip_gemma_output(output: &str) -> String {
+    // 1. Strip Gemma 4 thinking tokens (two forms).
+    let without_thinking = if let Some(pos) = output.find("<channel|>") {
+        &output[pos + "<channel|>".len()..]
+    } else if let Some(rest) = output.strip_prefix("<|channel>thought") {
+        rest.trim_start_matches(['\n', ' '])
+    } else {
+        output
+    };
+
+    // 2. Drop any literal <end_of_turn>, then trim.
+    without_thinking.replace("<end_of_turn>", "").trim().to_owned()
 }
 
 impl LLMContext<'_>{
@@ -304,6 +334,11 @@ impl LLMContext<'_>{
             self.ctx.decode(&mut batch).with_context(|| "Failed to eval")?;
         }
 
+        let output = strip_gemma_output(&output);
+        if output.is_empty() {
+            return Err(LLMError::EmptyOutput.into());
+        }
+
         Ok(output)
     }
 }
@@ -311,6 +346,7 @@ impl LLMContext<'_>{
 #[cfg(test)]
 mod tests {
     use super::{next_layers_on_decode_fail, next_layers_on_load_fail, pick_n_ubatch, GPU_LAYERS_ALL};
+    use super::strip_gemma_output;
 
     #[test]
     fn decode_fail_sheds_about_ten_percent() {
@@ -343,5 +379,44 @@ mod tests {
         assert_eq!(pick_n_ubatch(6 * 1024 - 1), 128);
         assert_eq!(pick_n_ubatch(6 * 1024), 512);
         assert_eq!(pick_n_ubatch(24 * 1024), 512);
+    }
+
+    #[test]
+    fn strip_passes_through_plain_text() {
+        assert_eq!(strip_gemma_output("Bonjour le monde"), "Bonjour le monde");
+    }
+
+    #[test]
+    fn strip_trims_whitespace() {
+        assert_eq!(strip_gemma_output("  Hola  \n"), "Hola");
+    }
+
+    #[test]
+    fn strip_trailing_end_of_turn() {
+        assert_eq!(strip_gemma_output("Hola<end_of_turn>"), "Hola");
+        assert_eq!(strip_gemma_output("Hola <end_of_turn>\n"), "Hola");
+    }
+
+    #[test]
+    fn strip_thinking_block_with_closing_tag() {
+        assert_eq!(strip_gemma_output("<|channel>thought\nreason<channel|>Hola"), "Hola");
+        assert_eq!(strip_gemma_output("blah<channel|>  Hola \n"), "Hola");
+    }
+
+    #[test]
+    fn strip_thinking_prefix_without_closing_tag() {
+        assert_eq!(strip_gemma_output("<|channel>thought Hola"), "Hola");
+        assert_eq!(strip_gemma_output("<|channel>thought\nHola"), "Hola");
+    }
+
+    #[test]
+    fn strip_thinking_and_trailing_end_of_turn() {
+        assert_eq!(strip_gemma_output("<|channel>thought\nreason<channel|>Hola<end_of_turn>"), "Hola");
+    }
+
+    #[test]
+    fn strip_empty_is_empty() {
+        assert_eq!(strip_gemma_output("<end_of_turn>"), "");
+        assert_eq!(strip_gemma_output("   "), "");
     }
 }
