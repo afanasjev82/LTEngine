@@ -34,7 +34,30 @@ use prompt::PromptBuilder;
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
 #[cfg(feature = "api")]
+const GRACE_PERIOD: std::time::Duration = std::time::Duration::from_secs(1);
+#[cfg(feature = "api")]
 const HEARTBEAT_INTERVAL: std::time::Duration = std::time::Duration::from_secs(1);
+
+/// Build the `/translate` JSON response body. Used by all three exit points in the
+/// grace-race (early-return source==target, buffered fast path, streamed slow path)
+/// to avoid triplication.
+#[cfg(feature = "api")]
+fn translate_response_json(q: &str, translated_text: &str, source: &str, alternatives: Option<u32>) -> serde_json::Value {
+    let mut response = serde_json::json!({
+        "translatedText": improve_formatting(&q.to_string(), &translated_text.to_string())
+    });
+    if alternatives.is_some_and(|v| v > 0) {
+        response["alternatives"] = serde_json::json!([]);
+    }
+    if source == "auto" {
+        let d = detect_lang(&q.to_string());
+        response["detectedLanguage"] = serde_json::json!({
+            "language": d.language.code,
+            "confidence": d.confidence
+        });
+    }
+    response
+}
 
 #[derive(Parser, Debug, Clone)]
 #[command(version, about, long_about = None)]
@@ -332,46 +355,57 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
     
     #[cfg(feature = "api")]
     {
-        // actix-web does NOT cancel handler futures on client disconnect, but it DOES drop a
-        // streaming response body when a write fails. Hold the run_prompt future INSIDE the stream
-        // and emit a whitespace keepalive every HEARTBEAT_INTERVAL while it is pending: when the
-        // client (the proxy) disconnects, the next keepalive write fails -> actix drops the stream
-        // -> the run_prompt future is dropped -> the reqwest connection to vLLM closes -> vLLM
-        // aborts and frees the KV slot (~1s heartbeat + ~0.7s). Slow (>1s) responses gain leading
-        // ASCII whitespace before the JSON (valid per RFC 8259); short ones emit none.
+        // Identity translation: no LLM call.
+        if source == target {
+            return Ok(HttpResponse::Ok()
+                .json(translate_response_json(&q, &q, &source, body.alternatives)));
+        }
+
+        // Grace-race: poll run_prompt against a short timer. If it resolves within GRACE_PERIOD
+        // (the common case — vLLM errors almost always land here, fast), return a BUFFERED
+        // response with the correct HTTP status (preserves ApiError->status mapping + Medusa
+        // failover; no leading whitespace). Only if still pending after the grace do we commit
+        // to a streamed 200 + heartbeats — which lets a client disconnect drop `fut`
+        // (-> reqwest closes -> vLLM aborts and frees the KV slot ~1s later).
+        // The async-move block OWNS the Arc<LLM> + strings, so `fut` is 'static and movable
+        // from the grace-race into the stream.
         let cap = output_cap(q.chars().count(), &args);
-        let llm = llm.clone(); // own an Arc<LLM> to move into the 'static stream
+        let llm = llm.clone();
         let system = prompt.system;
         let user = prompt.user;
+        let mut fut = Box::pin(async move { llm.run_prompt(system, user, cap).await });
+
+        let resolved = tokio::select! {
+            res = &mut fut => Some(res),
+            _ = tokio::time::sleep(GRACE_PERIOD) => None,
+        };
+
+        if let Some(res) = resolved {
+            let translated_text = res.map_err(|e| {
+                let status = e.downcast_ref::<llm::ApiError>().map_or(500, llm::ApiError::http_status);
+                ErrorResponse { error: e.to_string(), status }
+            })?;
+            return Ok(HttpResponse::Ok()
+                .json(translate_response_json(&q, &translated_text, &source, body.alternatives)));
+        }
+
+        // Still pending after the grace -> stream with heartbeats. The 200 is now committed, so a
+        // *slow* error falls back to the original text (rare; the fast path above delivers clean
+        // error status). A client disconnect makes the next keepalive write fail -> actix drops the
+        // stream -> drops `fut` -> closes the reqwest to vLLM -> vLLM aborts.
         let alternatives = body.alternatives;
         let body_stream = async_stream::stream! {
-            let translated_text = if source != target {
-                let fut = llm.run_prompt(system, user, cap);
-                tokio::pin!(fut);
-                let mut ticker = tokio::time::interval(HEARTBEAT_INTERVAL);
-                ticker.tick().await; // the first tick completes immediately; consume it
-                loop {
-                    tokio::select! {
-                        res = &mut fut => break res.unwrap_or_else(|_| q.clone()),
-                        _ = ticker.tick() => yield Ok::<_, std::io::Error>(web::Bytes::from_static(b" ")),
-                    }
+            let mut ticker = tokio::time::interval(HEARTBEAT_INTERVAL);
+            ticker.tick().await; // the first tick completes immediately; consume it
+            let translated_text = loop {
+                tokio::select! {
+                    res = &mut fut => break res.unwrap_or_else(|_| q.clone()),
+                    _ = ticker.tick() => yield Ok::<_, std::io::Error>(web::Bytes::from_static(b" ")),
                 }
-            } else {
-                q.clone()
             };
-
-            let mut response = serde_json::json!({"translatedText": improve_formatting(&q, &translated_text)});
-            if alternatives.is_some_and(|v| v > 0) {
-                response["alternatives"] = serde_json::json!([]);
-            }
-            if source == "auto" {
-                let d = detect_lang(&q);
-                response["detectedLanguage"] = serde_json::json!({
-                    "language": d.language.code,
-                    "confidence": d.confidence
-                });
-            }
-            let bytes = serde_json::to_vec(&response).unwrap_or_default();
+            let bytes = serde_json::to_vec(
+                &translate_response_json(&q, &translated_text, &source, alternatives)
+            ).unwrap_or_default();
             yield Ok(web::Bytes::from(bytes));
         };
         Ok(HttpResponse::Ok().content_type("application/json").streaming(body_stream))
