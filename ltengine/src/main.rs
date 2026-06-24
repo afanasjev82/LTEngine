@@ -33,6 +33,9 @@ use prompt::PromptBuilder;
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
+#[cfg(feature = "api")]
+const HEARTBEAT_INTERVAL: std::time::Duration = std::time::Duration::from_secs(1);
+
 #[derive(Parser, Debug, Clone)]
 #[command(version, about, long_about = None)]
 struct Args {
@@ -327,43 +330,79 @@ async fn translate(req: HttpRequest, payload: web::Payload, args: web::Data<Arc<
     let llm = llm.get_ref();
     let prompt = pb.build(&q);
     
-    let translated_text = if source != target {
-        #[cfg(feature = "api")]
-        {
-            let cap = output_cap(q.chars().count(), &args);
-            llm.run_prompt(prompt.system, prompt.user, cap).await.map_err(|e| {
-                let status = e.downcast_ref::<llm::ApiError>().map_or(500, llm::ApiError::http_status);
-                ErrorResponse { error: e.to_string(), status }
-            })?
-        }
-        #[cfg(not(feature = "api"))]
-        {
+    #[cfg(feature = "api")]
+    {
+        // actix-web does NOT cancel handler futures on client disconnect, but it DOES drop a
+        // streaming response body when a write fails. Hold the run_prompt future INSIDE the stream
+        // and emit a whitespace keepalive every HEARTBEAT_INTERVAL while it is pending: when the
+        // client (the proxy) disconnects, the next keepalive write fails -> actix drops the stream
+        // -> the run_prompt future is dropped -> the reqwest connection to vLLM closes -> vLLM
+        // aborts and frees the KV slot (~1s heartbeat + ~0.7s). Slow (>1s) responses gain leading
+        // ASCII whitespace before the JSON (valid per RFC 8259); short ones emit none.
+        let cap = output_cap(q.chars().count(), &args);
+        let llm = llm.clone(); // own an Arc<LLM> to move into the 'static stream
+        let system = prompt.system;
+        let user = prompt.user;
+        let alternatives = body.alternatives;
+        let body_stream = async_stream::stream! {
+            let translated_text = if source != target {
+                let fut = llm.run_prompt(system, user, cap);
+                tokio::pin!(fut);
+                let mut ticker = tokio::time::interval(HEARTBEAT_INTERVAL);
+                ticker.tick().await; // the first tick completes immediately; consume it
+                loop {
+                    tokio::select! {
+                        res = &mut fut => break res.unwrap_or_else(|_| q.clone()),
+                        _ = ticker.tick() => yield Ok::<_, std::io::Error>(web::Bytes::from_static(b" ")),
+                    }
+                }
+            } else {
+                q.clone()
+            };
+
+            let mut response = serde_json::json!({"translatedText": improve_formatting(&q, &translated_text)});
+            if alternatives.is_some_and(|v| v > 0) {
+                response["alternatives"] = serde_json::json!([]);
+            }
+            if source == "auto" {
+                let d = detect_lang(&q);
+                response["detectedLanguage"] = serde_json::json!({
+                    "language": d.language.code,
+                    "confidence": d.confidence
+                });
+            }
+            let bytes = serde_json::to_vec(&response).unwrap_or_default();
+            yield Ok(web::Bytes::from(bytes));
+        };
+        Ok(HttpResponse::Ok().content_type("application/json").streaming(body_stream))
+    }
+
+    #[cfg(not(feature = "api"))]
+    {
+        let translated_text = if source != target {
             llm.run_prompt(prompt.system, prompt.user).map_err(|e| {
                 let status = if matches!(e.downcast_ref::<llm::LLMError>(), Some(llm::LLMError::Busy)) { 503 } else { 500 };
                 ErrorResponse { error: e.to_string(), status }
             })?
+        } else {
+            q.clone()
+        };
+
+        let mut response = serde_json::json!({"translatedText": improve_formatting(&q, &translated_text)});
+        // TODO: we just add this for compatibility for now
+        // we should allow multiple alternatives to be generated
+        if body.alternatives.is_some_and(|v| v > 0) {
+            response["alternatives"] = serde_json::json!([]);
         }
-    }else{
-        q.clone()
-    };
-    
-    let mut response = serde_json::json!({"translatedText": improve_formatting(&q, &translated_text)});
-
-    // TODO: we just add this for compatibility for now
-    // we should allow multiple alternatives to be generated
-    if body.alternatives.is_some_and(|v| v > 0) {
-        response["alternatives"] = serde_json::json!([]);
+        if source == "auto" {
+            let d = detect_lang(&q);
+            response["detectedLanguage"] = serde_json::json!({
+                "language": d.language.code,
+                "confidence": d.confidence
+            });
+        }
+        Ok(HttpResponse::Ok().json(response))
     }
-
-    if source == "auto" {
-        let d = detect_lang(&q);
-        response["detectedLanguage"] = serde_json::json!({
-            "language": d.language.code,
-            "confidence": d.confidence
-        });
-    }
-
-    Ok(HttpResponse::Ok().json(response))
 }
 
 #[post("/translate_file")]
