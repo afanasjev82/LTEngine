@@ -25,11 +25,13 @@ parking_lot = { version = "0.12", optional = true }
 
 # API inference
 reqwest = { version = "0.13", default-features = false, features = ["json", "native-tls"], optional = true }
+async-stream = { version = "0.3", optional = true }
+tokio = { version = "1", features = ["macros", "time"], optional = true }
 
 [features]
 default = ["local"]
 local = ["dep:llama-cpp-bindings", "dep:hf-hub", "dep:encoding_rs", "dep:parking_lot"]
-api = ["dep:reqwest"]
+api = ["dep:reqwest", "dep:async-stream", "dep:tokio"]
 cuda = ["local", "llama-cpp-bindings/cuda"]
 metal = ["local", "llama-cpp-bindings/metal"]
 vulkan = ["local", "llama-cpp-bindings/vulkan"]
