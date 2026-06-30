@@ -19,7 +19,7 @@ whatlang = "0.18.0"
 
 # Local inference (default)
 hf-hub = { version = "0.5.0", optional = true }
-llama-cpp-bindings = { git = "https://github.com/intentee/llama-cpp-bindings", tag = "v0.9.0", optional = true }
+llama-cpp-2 = { version = "0.1.150", optional = true }
 encoding_rs = { version = "0.8.35", optional = true }
 parking_lot = { version = "0.12", optional = true }
 
@@ -30,11 +30,11 @@ tokio = { version = "1", features = ["macros", "time"], optional = true }
 
 [features]
 default = ["local"]
-local = ["dep:llama-cpp-bindings", "dep:hf-hub", "dep:encoding_rs", "dep:parking_lot"]
+local = ["dep:llama-cpp-2", "dep:hf-hub", "dep:encoding_rs", "dep:parking_lot"]
 api = ["dep:reqwest", "dep:async-stream", "dep:tokio"]
-cuda = ["local", "llama-cpp-bindings/cuda"]
-metal = ["local", "llama-cpp-bindings/metal"]
-vulkan = ["local", "llama-cpp-bindings/vulkan"]
+cuda = ["local", "llama-cpp-2/cuda"]
+metal = ["local", "llama-cpp-2/metal"]
+vulkan = ["local", "llama-cpp-2/vulkan"]
 
 [build-dependencies]
 static-files = "0.2.5"
