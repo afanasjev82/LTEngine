@@ -15,14 +15,14 @@ hf-hub = { version = "0.5.0" }
 anyhow = "1.0.97"
 thiserror = { workspace = true }
 parking_lot = "0.12"
-llama-cpp-bindings = { git = "https://github.com/intentee/llama-cpp-bindings", tag = "v0.9.0" }
+llama-cpp-2 = "0.1.150"
 encoding_rs = "0.8.35"
 actix-multipart = "0.7.2"
 whatlang = "0.18.0"
 [features]
-cuda = ["llama-cpp-bindings/cuda"]
-metal = ["llama-cpp-bindings/metal"]
-vulkan = ["llama-cpp-bindings/vulkan"]
+cuda = ["llama-cpp-2/cuda"]
+metal = ["llama-cpp-2/metal"]
+vulkan = ["llama-cpp-2/vulkan"]
 
 [build-dependencies]
 static-files = "0.2.5"
