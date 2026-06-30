@@ -43,8 +43,8 @@ struct Args {
     #[arg(short='m', long, value_parser = MODELS.keys().collect::<Vec<_>>(), default_value = "gemma3-4b")]
     model: String,
 
-    /// Path to .gguf model file
-    #[arg(long, default_value = "")]
+    /// Path to .gguf model file (also via the LTENGINE_MODEL_FILE env var)
+    #[arg(long, env = "LTENGINE_MODEL_FILE", default_value = "")]
     model_file: String,
 
     /// Set an API key

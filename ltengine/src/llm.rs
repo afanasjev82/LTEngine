@@ -1,16 +1,14 @@
-use llama_cpp_bindings::context::params::LlamaContextParams;
-use llama_cpp_bindings::llama_backend::LlamaBackend;
-use llama_cpp_bindings::model::params::LlamaModelParams;
-use llama_cpp_bindings::model::{LlamaModel, LlamaChatMessage};
-use llama_cpp_bindings::token::LlamaToken;
-use llama_cpp_bindings::context::LlamaContext;
-use llama_cpp_bindings::model::AddBos;
-use llama_cpp_bindings::llama_batch::LlamaBatch;
-use llama_cpp_bindings::sampling::LlamaSampler;
-use llama_cpp_bindings::sampled_token::SampledToken;
-use llama_cpp_bindings::{send_logs_to_log, LogOptions};
-use llama_cpp_bindings::{list_llama_ggml_backend_devices, LlamaBackendDeviceType};
-use llama_cpp_bindings::{DecodeError, LlamaModelLoadError};
+use llama_cpp_2::context::params::LlamaContextParams;
+use llama_cpp_2::llama_backend::LlamaBackend;
+use llama_cpp_2::model::params::LlamaModelParams;
+use llama_cpp_2::model::{LlamaModel, LlamaChatMessage};
+use llama_cpp_2::token::LlamaToken;
+use llama_cpp_2::context::LlamaContext;
+use llama_cpp_2::model::AddBos;
+use llama_cpp_2::llama_batch::LlamaBatch;
+use llama_cpp_2::sampling::LlamaSampler;
+use llama_cpp_2::{send_logs_to_tracing, LogOptions};
+use llama_cpp_2::{list_llama_ggml_backend_devices, LlamaBackendDeviceType};
 use std::num::NonZeroU32;
 use std::path::PathBuf;
 use parking_lot::Mutex;
@@ -74,10 +72,14 @@ pub struct LLMContext<'a>{
 impl LLM {
     pub fn new(model_path: PathBuf, cpu: bool, verbose: bool) -> Result<Self> {
         if !verbose{
-            send_logs_to_log(LogOptions::default().with_logs_enabled(false));
+            send_logs_to_tracing(LogOptions::default().with_logs_enabled(false));
         }
-        
+
         let backend = LlamaBackend::init()?;
+
+        if !model_path.exists() {
+            return Err(anyhow::anyhow!("Model file not found: {}", model_path.display()));
+        }
 
         let use_gpu = !cpu && cfg!(any(feature = "cuda", feature = "vulkan"));
 
@@ -97,7 +99,7 @@ impl LLM {
                 &LlamaModelParams::default().with_n_gpu_layers(0),
             )
             .with_context(|| "Unable to load model")?;
-            eprintln!("ltengine: CPU only ({} layers)", m.n_layer().unwrap_or(0));
+            eprintln!("ltengine: CPU only ({} layers)", m.n_layer());
             m
         };
 
@@ -129,12 +131,9 @@ impl LLM {
             let model = match LlamaModel::load_from_file(
                 backend,
                 model_path,
-                &LlamaModelParams::default().with_n_gpu_layers(n_gpu),
+                &LlamaModelParams::default().with_n_gpu_layers(n_gpu as u32),
             ) {
                 Ok(m) => m,
-                Err(e @ LlamaModelLoadError::FileNotFound(_)) => {
-                    return Err(anyhow::Error::new(e).context("Unable to load model"));
-                }
                 Err(e) => {
                     let next = next_layers_on_load_fail(n_gpu);
                     eprintln!("ltengine: model load failed at {n_gpu} GPU layers ({e}), retrying with {next}");
@@ -148,7 +147,7 @@ impl LLM {
 
             match Self::probe_decode(&model, backend) {
                 Ok(()) => {
-                    let total = model.n_layer().unwrap_or(0);
+                    let total = model.n_layer();
                     let on_gpu = if n_gpu < 0 { total } else { (n_gpu as u32).min(total) };
                     if on_gpu >= total {
                         eprintln!("ltengine: {total}/{total} layers offloaded to GPU");
@@ -158,7 +157,7 @@ impl LLM {
                     return Ok(model);
                 }
                 Err(e) => {
-                    let total = model.n_layer().unwrap_or(0);
+                    let total = model.n_layer();
                     let current = if n_gpu < 0 { total as i32 } else { n_gpu.min(total as i32) };
                     let next = next_layers_on_decode_fail(current);
                     eprintln!("ltengine: GPU probe decode failed at {current} layers ({e}), retrying with {next}");
@@ -175,25 +174,19 @@ impl LLM {
     /// Minimal one-token decode to confirm the GPU can run compute at the current
     /// offload. Maps context/batch allocation failures to a decode-style error so
     /// the caller sheds layers.
-    fn probe_decode(model: &LlamaModel, backend: &LlamaBackend) -> std::result::Result<(), DecodeError> {
+    fn probe_decode(model: &LlamaModel, backend: &LlamaBackend) -> Result<()> {
         let ctx_params = LlamaContextParams::default()
             .with_n_ctx(Some(NonZeroU32::new(8).expect("8 is non-zero")))
             .with_n_ubatch(1);
 
-        let mut ctx = match LlamaContext::from_model(model, backend, ctx_params) {
-            Ok(c) => c,
-            Err(_) => return Err(DecodeError::DecodeOutOfMemory),
-        };
+        let mut ctx = model.new_context(backend, ctx_params)
+            .with_context(|| "probe: unable to create context")?;
 
-        let mut batch = match LlamaBatch::new(8, 1) {
-            Ok(b) => b,
-            Err(_) => return Err(DecodeError::DecodeOutOfMemory),
-        };
-        if batch.add(&SampledToken::Content(LlamaToken(0)), 0, &[0], true).is_err() {
-            return Err(DecodeError::DecodeOutOfMemory);
-        }
+        let mut batch = LlamaBatch::new(8, 1);
+        batch.add(LlamaToken(0), 0, &[0], true)
+            .with_context(|| "probe: unable to add token to batch")?;
 
-        ctx.decode(&mut batch)
+        ctx.decode(&mut batch).with_context(|| "probe: decode failed")
     }
 
     pub fn create_context(&self, ctx_size: i32) -> Result<LLMContext<'_>>{
@@ -207,7 +200,7 @@ impl LLM {
         // ctx_params = ctx_params.with_n_threads(threads);
         // ctx_params = ctx_params.with_n_threads_batch(threads_batch);
 
-        let ctx = LlamaContext::from_model(&self.model, &self.backend, ctx_params)
+        let ctx = self.model.new_context(&self.backend, ctx_params)
             .with_context(|| "Unable to create the llama context")?;
         Ok(LLMContext{ llm: self, ctx, ctx_size })
     }
@@ -271,14 +264,13 @@ impl LLMContext<'_>{
         // let ctx_size: i32 = tokens_list.len() as i32 * 3;
         
         // We use this object to submit token data for decoding
-        let mut batch = LlamaBatch::new(self.ctx_size.try_into()?, 1)
-            .with_context(|| "Failed to allocate llama batch")?;
+        let mut batch = LlamaBatch::new(self.ctx_size.try_into()?, 1);
 
         let last_index: i32 = (tokens_list.len() - 1) as i32;
         for (i, token) in (0_i32..).zip(tokens_list.into_iter()) {
             // llama_decode will output logits only for the last token of the prompt
             let is_last = i == last_index;
-            batch.add(&SampledToken::Content(token), i, &[0], is_last)?;
+            batch.add(token, i, &[0], is_last)?;
         }
 
         self.ctx.decode(&mut batch)
@@ -289,8 +281,7 @@ impl LLMContext<'_>{
         let mut decoder = encoding_rs::UTF_8.new_decoder();
         let seq_breakers = vec![b"\n", b":", b"\"", b"*"];
 
-        let dry = LlamaSampler::dry(&self.llm.model, 0.0, 1.75, 2, -1, seq_breakers)
-            .with_context(|| "Failed to build dry sampler")?;
+        let dry = LlamaSampler::dry(&self.llm.model, 0.0, 1.75, 2, -1, seq_breakers);
         let mut sampler = LlamaSampler::chain_simple([
             LlamaSampler::penalties(64, 1.0, 0.0, 0.0),
             dry,
@@ -309,24 +300,20 @@ impl LLMContext<'_>{
 
             // sample the next token
             {
-                let raw_token = sampler.sample(&self.ctx, batch.n_tokens() - 1)
-                    .with_context(|| "Sampler failed")?;
+                let token = sampler.sample(&self.ctx, batch.n_tokens() - 1);
 
-                sampler.accept(raw_token)
-                    .with_context(|| "Sampler accept failed")?;
-
-                let sampled = SampledToken::Content(raw_token);
+                sampler.accept(token);
 
                 // is it an end of stream?
-                if self.llm.model.is_eog_token(&sampled) {
+                if self.llm.model.is_eog_token(token) {
                     break;
                 }
-                    
-                let output_string = self.llm.model.token_to_piece(&sampled, &mut decoder, true, None)?;
+
+                let output_string = self.llm.model.token_to_piece(token, &mut decoder, true, None)?;
                 output.push_str(&output_string);
 
                 batch.clear();
-                batch.add(&sampled, n_cur, &[0], true)?;
+                batch.add(token, n_cur, &[0], true)?;
             }
 
             n_cur += 1;
