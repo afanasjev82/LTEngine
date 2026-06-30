@@ -79,9 +79,9 @@ struct Args {
     #[arg(short='m', long, value_parser = MODELS.keys().collect::<Vec<_>>(), default_value = "gemma3-4b")]
     model: String,
 
-    /// Path to .gguf model file (local inference)
+    /// Path to .gguf model file (local inference; also via the LTENGINE_MODEL_FILE env var)
     #[cfg(feature = "local")]
-    #[arg(long, default_value = "")]
+    #[arg(long, env = "LTENGINE_MODEL_FILE", default_value = "")]
     model_file: String,
 
     /// Set an API key
