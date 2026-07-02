@@ -27,7 +27,7 @@ It is possible to run LTEngine entirely on the CPU, but an accelerator will grea
 ## Build
 
 ```bash
-git clone https://github.com/LibreTranslate/LTEngine --recursive
+git clone https://github.com/LibreTranslate/LTEngine
 cd LTEngine
 cargo build [--features cuda,vulkan,metal] --release
 ```
