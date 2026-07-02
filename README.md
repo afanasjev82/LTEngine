@@ -34,7 +34,7 @@ cd LTEngine
 cargo build [--features cuda,vulkan,metal] --release
 ```
 
-The llama.cpp bindings are fetched automatically by Cargo as a pinned git dependency ([llama-cpp-bindings](https://github.com/intentee/llama-cpp-bindings)) — there are no git submodules, so `--recursive` is not needed.
+The llama.cpp binding ([llama-cpp-2](https://crates.io/crates/llama-cpp-2), from [utilityai/llama-cpp-rs](https://github.com/utilityai/llama-cpp-rs)) is fetched automatically by Cargo from crates.io and bundles and compiles llama.cpp itself — there are no git submodules, so `--recursive` is not needed.
 
 Available build features:
 
@@ -248,7 +248,7 @@ We welcome contributions! Just open a pull request.
 
 ## Credits
 
-This work is largely possible thanks to [llama-cpp-bindings](https://github.com/intentee/llama-cpp-bindings) which provides the Rust bindings to [llama.cpp](https://github.com/ggml-org/llama.cpp). Earlier versions were built on [llama-cpp-rs](https://github.com/utilityai/llama-cpp-rs).
+This work is largely possible thanks to [llama-cpp-2](https://github.com/utilityai/llama-cpp-rs) which provides the Rust bindings to [llama.cpp](https://github.com/ggml-org/llama.cpp). Earlier versions were built on [llama-cpp-bindings](https://github.com/intentee/llama-cpp-bindings).
 
 ## License
 
