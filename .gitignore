@@ -24,3 +24,6 @@ docs/**
 # Understand-anything
 .understand-anything/intermediate/
 .understand-anything/diff-overlay.json
+
+# Handoff
+**/HANDOFF.md
