@@ -1,5 +1,5 @@
 # Last upstream (LibreTranslate/LTEngine, remote `upstream`) commit SHA whose content
 # has been synced into this fork. This is the REAL anchor for upstream drift — do NOT
 # trust GitHub's ahead/behind counter (the fork and upstream share no git ancestry).
-# Bumped by scripts/sync-upstream.sh only after a successful, pushed sync.
+# Bumped by the sync-upstream tooling (kept locally, untracked) after a pushed sync.
 c0581c6

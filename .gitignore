@@ -18,12 +18,16 @@ target/
 
 build/
 .vscode/
+
+# --- Local LLM-assisted development artifacts -------------------------------
+# Deliberately NOT tracked. These live on the developer machine only and must
+# never be committed or pushed to a remote. They may be used freely in local
+# SDD branches — just never `git add -f` them, or they land on origin again.
+# (These were purged from main/development history on 2026-08-10.)
 .claude/
 docs/
-
-# Understand-anything
-.understand-anything/intermediate/
-.understand-anything/diff-overlay.json
+scripts/
+.understand-anything/
 
 # Handoff
 **/HANDOFF.md
