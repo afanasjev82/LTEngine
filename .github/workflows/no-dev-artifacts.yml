@@ -1,0 +1,74 @@
+name: No dev artifacts
+
+# .claude/, .understand-anything/, docs/, scripts/ and .vscode/ hold local
+# LLM-assisted-development tooling and generated analysis, not product code.
+# They were purged from this repository's history on 2026-08-10 and must never
+# return.
+#
+# Two existing defences are not sufficient on their own:
+#   * .gitignore has no effect on files that are already tracked — which is
+#     exactly how these got committed in the first place, since .claude/ and
+#     docs/ were already ignored at the time.
+#   * the pre-push hook lives in .git/hooks/, and Git cannot ship hooks inside a
+#     repository (a clone that auto-installed hooks would execute arbitrary code
+#     on the machine cloning it). So a fresh clone has no hook at all, and
+#     `git push --no-verify` skips it even where it is installed.
+#
+# This job is the server-side backstop: it applies to every clone and every
+# contributor, and cannot be bypassed from the client.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  no-dev-artifacts:
+    name: Reject local development artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Tracked files in this commit
+        run: |
+          set -eu
+          PATTERN='^(\.claude/|\.understand-anything/|docs/|scripts/|\.vscode/)'
+          found="$(git ls-files | grep -E "$PATTERN" || true)"
+          if [ -n "$found" ]; then
+            echo "::error::Local development artifacts are tracked in this commit."
+            printf '%s\n' "$found" | sed 's/^/    /'
+            echo ""
+            echo "These paths must never be committed. To remove them while keeping"
+            echo "your local copies on disk:"
+            echo "    git rm -r --cached .claude .understand-anything docs scripts .vscode"
+            echo "    git commit -m 'chore: untrack local development artifacts'"
+            exit 1
+          fi
+          echo "OK: nothing tracked at $(git rev-parse --short HEAD)"
+
+      - name: Anywhere in this branch's history
+        run: |
+          set -eu
+          # A commit that adds these files and a later commit that deletes them
+          # still leaves the blobs in history, so the tip check alone is not enough.
+          PATTERN='^(\.claude/|\.understand-anything/|docs/|scripts/|\.vscode/)'
+          found="$(git log --name-only --pretty=format: HEAD | sort -u | grep -E "$PATTERN" || true)"
+          if [ -n "$found" ]; then
+            echo "::error::Local development artifacts appear somewhere in this branch's history."
+            printf '%s\n' "$found" | sed 's/^/    /'
+            echo ""
+            echo "Removing them in a follow-up commit is not enough — the blobs remain"
+            echo "reachable. The history itself has to be rewritten (git filter-repo)."
+            exit 1
+          fi
+          echo "OK: clean across $(git rev-list --count HEAD) commits"
