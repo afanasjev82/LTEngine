@@ -1,9 +1,12 @@
 name: No dev artifacts
 
-# .claude/, .understand-anything/, docs/, scripts/ and .vscode/ hold local
-# LLM-assisted-development tooling and generated analysis, not product code.
-# They were purged from this repository's history on 2026-08-10 and must never
-# return.
+# .claude/, .understand-anything/, docs/, scripts/, .vscode/, .superpowers/,
+# graphify-out/, upstream_repo/ and .venv/ hold local LLM-assisted-development
+# tooling, generated analysis and scratch checkouts — not product code. The first
+# five were purged from this repository's history on 2026-08-10 and must never
+# return; the rest were only ever protected by a machine-global gitignore, which
+# does not travel with a clone, so they were one `git add .` from being committed
+# on any other machine.
 #
 # Two existing defences are not sufficient on their own:
 #   * .gitignore has no effect on files that are already tracked — which is
@@ -42,7 +45,7 @@ jobs:
       - name: Tracked files in this commit
         run: |
           set -eu
-          PATTERN='^(\.claude/|\.understand-anything/|docs/|scripts/|\.vscode/)'
+          PATTERN='^(\.claude/|\.understand-anything/|docs/|scripts/|\.vscode/|\.superpowers/|graphify-out/|upstream_repo/|\.venv/)'
           found="$(git ls-files | grep -E "$PATTERN" || true)"
           if [ -n "$found" ]; then
             echo "::error::Local development artifacts are tracked in this commit."
@@ -50,7 +53,8 @@ jobs:
             echo ""
             echo "These paths must never be committed. To remove them while keeping"
             echo "your local copies on disk:"
-            echo "    git rm -r --cached .claude .understand-anything docs scripts .vscode"
+            echo "    git rm -r --cached .claude .understand-anything docs scripts .vscode \\"
+            echo "                       .superpowers graphify-out upstream_repo .venv"
             echo "    git commit -m 'chore: untrack local development artifacts'"
             exit 1
           fi
@@ -61,7 +65,7 @@ jobs:
           set -eu
           # A commit that adds these files and a later commit that deletes them
           # still leaves the blobs in history, so the tip check alone is not enough.
-          PATTERN='^(\.claude/|\.understand-anything/|docs/|scripts/|\.vscode/)'
+          PATTERN='^(\.claude/|\.understand-anything/|docs/|scripts/|\.vscode/|\.superpowers/|graphify-out/|upstream_repo/|\.venv/)'
           found="$(git log --name-only --pretty=format: HEAD | sort -u | grep -E "$PATTERN" || true)"
           if [ -n "$found" ]; then
             echo "::error::Local development artifacts appear somewhere in this branch's history."
