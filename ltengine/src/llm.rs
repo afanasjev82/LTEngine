@@ -120,7 +120,8 @@ impl LLM {
     }
 
     /// Load on GPU, shedding layers until both load AND a minimal trial decode
-    /// succeed. Adapts upstream 3cdef35 + cdc2ba2 + 9b6c7ee to intentee typed errors.
+    /// succeed. Adapts upstream 3cdef35 + cdc2ba2 + 9b6c7ee to this fork's
+    /// llama-cpp-2 bindings and anyhow-based errors.
     fn load_model_probing_gpu(
         backend: &LlamaBackend,
         model_path: &PathBuf,
