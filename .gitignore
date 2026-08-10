@@ -28,6 +28,12 @@ build/
 docs/
 scripts/
 .understand-anything/
+# Below were previously covered only by a machine-global gitignore, which does
+# not travel with a clone — on any other machine they showed up as untracked.
+.superpowers/
+graphify-out/
+upstream_repo/
+.venv/
 
 # Handoff
 **/HANDOFF.md
