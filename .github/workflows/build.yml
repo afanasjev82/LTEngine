@@ -27,7 +27,12 @@ jobs:
         run: cargo test
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        # v4 declares node20, which the runners now force onto node24 and warn about.
+        # v5 does NOT fix it — it only added preliminary node24 support and still
+        # defaulted to node20. v6 was the first to default to node24; v7 is current
+        # and changes nothing for a plain name+path upload (its direct-upload mode
+        # is opt-in via `archive: false`).
+        uses: actions/upload-artifact@v7
         with:
           name: ubuntu
           path: target/release/*
